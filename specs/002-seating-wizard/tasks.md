@@ -149,6 +149,45 @@
 
 ---
 
+## Phase 11: User Story 7 — Couple Detection and Visual Coloring (Priority: P2)
+
+**Goal**: `assignCoupleIds` runs on guest import; couples get shared colour in Steps 2 and 4. Couple-aware seat placement keeps pairs adjacent on same side.
+
+**Independent Test**: Import "Marek Kałudzki\nIzabela Kałudzka" → both rows show same-colour left border in Step 2. Assign seats → both appear at same table, same side, adjacent, with same-colour border.
+
+- [x] T031 Add `coupleId: string | null` to `Guest` interface in `src/types/index.ts`; update `parsePlan` in `src/services/storageService.ts` to normalise missing `coupleId` via `{ ...g, coupleId: g.coupleId ?? null }`
+- [x] T032 [P] Add `assignCoupleIds(guests: Guest[]): Guest[]` to `src/services/seatingAssigner.ts` — scans adjacent pairs using existing `surnameParts`/`surnamePartsMatch`; assigns `couple-N` ids
+- [x] T033 [P] Add `arrangeClusterWithCouples(cluster, leftCount)` and update `assignSeatsProximity` in `src/services/seatingAssigner.ts` — packs couple units sequentially so both members land on the same side in adjacent seats; falls back to random when all labels empty AND no couples
+- [x] T034 Add `COUPLE_PALETTE` constant and `coupleColorMap` `useMemo` to `src/App.tsx`; call `assignCoupleIds(raw)` in `PARSE_AND_ADVANCE` reducer case; pass `coupleColorMap` to `LabelStep` and `SeatingChart`
+- [x] T035 [P] Update `src/components/LabelStep/GuestLabelRow.tsx` — add `coupleColor?: string` and `isCheckedForPair`/`isPairDisabled`/`onPairCheck` props; render checkbox and apply `borderLeft` when colour present
+- [x] T036 [P] Update `src/components/SeatingChart/SeatingChart.tsx` and `src/components/TableCard/TableCard.tsx` — accept and thread `coupleColorMap: Map<string, string>`; apply `borderLeft` on `SeatItem` when guest has a couple colour
+- [x] T037 Update `tests/unit/storageService.test.ts` — add `coupleId: null` to all `mockPlan` guest fixtures so `parsePlan` round-trip test passes
+
+---
+
+## Phase 12: User Story 8 — Manual Couple Pairing (Priority: P2)
+
+**Goal**: Checkboxes in Step 2 let the planner select exactly 2 guests and click "Stwórz parę" to assign them a shared coupleId. Checkboxes reset afterwards.
+
+**Independent Test**: Check "Anna Nowak" and "Jan Kowalski" — "Stwórz parę" bar appears with both names. Click button → both names gain shared colour, checkboxes clear.
+
+- [x] T038 Add `PAIR_GUESTS { idA, idB }` action to `src/App.tsx` reducer — computes next `couple-N` from existing unique coupleIds; overwrites both guests' coupleId; add `onPairGuests` prop to `LabelStep` and wire dispatch
+- [x] T039 [P] Update `src/components/LabelStep/LabelStep.tsx` — add `checkedForPair: string[]` local state; `handlePairCheck` limits selection to 2; show `.pairBar` (name + button) when 2 selected, `.pairHint` otherwise; add `onPairGuests` prop; add `createCouple`/`createCoupleHint` to all three translation locales in `src/i18n/translations.ts`
+
+---
+
+## Phase 13: Cloud Run Deployment
+
+**Goal**: App is containerised and deployed to Google Cloud Run as a publicly accessible static site.
+
+- [x] T040 Create `Dockerfile` — multi-stage: `node:20-alpine` build stage runs `npm ci && npm run build`; `nginx:alpine` serve stage copies `dist/` and listens on port 8080
+- [x] T041 [P] Create `nginx.conf` — `listen 8080`; `try_files $uri $uri/ /index.html` for SPA routing; gzip enabled
+- [x] T042 [P] Create `.dockerignore` — exclude `node_modules/`, `dist/`, `.git/`, `*.log`, `wedding-state.json`, `.specify/`, `specs/`, `tests/`
+- [x] T043 Deploy via `gcloud run deploy seats-planner --source . --region europe-central2 --allow-unauthenticated --project cusina-ai`; fix TS2783 double-`coupleId` spread error in `storageService.ts` that surfaced only under `tsc -b`
+- [x] T044 [P] Initialise git repo, add `.gitignore`, push all code to `https://github.com/szczawinski/seat-planner`
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

@@ -130,6 +130,40 @@ The wedding planner clears browser storage (or opens a different browser profile
 
 ---
 
+### User Story 7 - Couple Detection and Visual Coloring (Priority: P2)
+
+The wedding planner imports a list where couples are listed adjacent to each other. The app automatically detects pairs by matching surnames (including Polish gendered variants) and colours their names with the same hue — both in the group-assignment step and the final seating chart — so the planner can immediately verify which couples were recognised.
+
+**Why this priority**: Couples must sit next to each other; incorrectly detected or missed couples lead to a poor seating plan and require manual correction.
+
+**Independent Test**: Import "Marek Kałudzki\nIzabela Kałudzka" — both names appear with the same colour border in Step 2. Advance to Step 4 — both names show the same colour border at the same table, adjacent seats on the same side.
+
+**Acceptance Scenarios**:
+
+1. **Given** two adjacent guests share a matching surname (including gendered suffix pairs), **When** the list is parsed, **Then** both guests are assigned the same `coupleId` and displayed in a shared colour.
+2. **Given** two guests are detected as a couple, **When** seats are assigned, **Then** both are placed on the same side (left or right) of the same table in adjacent seats.
+3. **Given** multiple couples exist, **When** displayed, **Then** each couple has a distinct colour from other couples.
+4. **Given** a guest's surname matches no other adjacent guest, **When** the list is parsed, **Then** no coupleId is assigned and no colour is shown.
+
+---
+
+### User Story 8 - Manual Couple Pairing (Priority: P2)
+
+The algorithm did not detect two guests as a couple (e.g. different surnames after marriage, same-sex couple with unrelated surnames). The planner manually marks them as a couple using checkboxes in Step 2.
+
+**Why this priority**: Automatic surname detection cannot cover all real-world cases; manual override is essential for the planner to produce a correct result.
+
+**Independent Test**: In Step 2, check the checkbox beside "Anna Nowak" and "Jan Kowalski" — a "Stwórz parę" button appears showing both names. Click it — both names gain a shared colour, checkboxes clear, and the pairing is used in the next assignment.
+
+**Acceptance Scenarios**:
+
+1. **Given** Step 2 is open, **When** the planner checks the checkbox for one guest, **Then** the checkbox is filled and the guest is marked as pending pairing.
+2. **Given** one guest is checked, **When** the planner checks a second guest, **Then** a "Stwórz parę" button appears showing both names; remaining checkboxes are disabled.
+3. **Given** the "Stwórz parę" button is visible, **When** the planner clicks it, **Then** both guests receive the same coupleId and shared colour, and all checkboxes reset to unchecked.
+4. **Given** a manually paired couple, **When** seats are assigned, **Then** both members are placed on the same side in adjacent seats (same as auto-detected couples).
+
+---
+
 ### Edge Cases
 
 - Guest count that does not divide evenly into tables — handled gracefully with no omissions.
@@ -165,6 +199,10 @@ The wedding planner clears browser storage (or opens a different browser profile
 - **FR-020**: System MUST apply a surname-affinity bonus in the proximity algorithm: guests who share a surname (including Polish gendered variants, e.g. Kowalski/Kowalska) receive a boosted affinity score equivalent to sharing ~10 labels, ensuring families cluster even without explicit label assignment.
 - **FR-021**: System MUST allow the planner to switch the UI language between Polish, English, and Italian at any time via a language picker in the header; all UI text (step names, buttons, errors, headings) must update immediately without a page reload.
 - **FR-022**: System MUST silently sync the seating plan to a local file via a `/api/state` HTTP endpoint when the dev server is running, and fall back to localStorage-only when the endpoint is unavailable.
+- **FR-023**: System MUST automatically detect couples by scanning adjacent guest pairs in the import order: if two consecutive guests share a matching surname part (≥ 5 common prefix chars, Polish gendered suffix tolerance ≤ 3 trailing chars), they are assigned the same `coupleId`.
+- **FR-024**: System MUST display guests who share a `coupleId` with a matching coloured left border on their name — in Step 2 (group assignment) and Step 4 (seating chart) — using a palette of at least 8 distinct couple colours.
+- **FR-025**: System MUST ensure couples (auto-detected or manually paired) are placed on the same side of the same table in adjacent seats during proximity assignment.
+- **FR-026**: System MUST allow the planner to manually pair any two guests in Step 2 by checking their checkboxes (max 2 at once) and clicking "Stwórz parę"; the pair receives a shared `coupleId` and colour, and the checkboxes reset.
 
 ### Key Entities
 
@@ -187,6 +225,8 @@ The wedding planner clears browser storage (or opens a different browser profile
 - **SC-007**: Switching the UI language takes effect within one render cycle — no visible flicker or stale text.
 - **SC-008**: A guest name correction in Step 2 (double-click → edit → confirm) takes under 5 seconds and all existing label badges remain highlighted.
 - **SC-009**: Two guests sharing a surname but having no shared labels are placed at the same table at least 80% of the time when table capacity allows it.
+- **SC-010**: Two guests assigned a `coupleId` (auto or manual) are placed in adjacent seats on the same side of the same table 100% of the time when table capacity allows it.
+- **SC-011**: After manually pairing two guests via checkboxes and clicking "Stwórz parę", their shared colour is visible within one render cycle.
 
 ## Assumptions
 

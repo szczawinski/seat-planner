@@ -92,15 +92,25 @@ tests/unit/seatingAssigner.test.ts          # Guest[] input; proximity + surname
 tests/unit/storageService.test.ts           # v4 schema; v1/v2/v3 → null test
 tests/integration/seatingPlan.test.tsx      # Wizard navigation flow
 
+MODIFIED EXISTING:
+src/components/TableCard/TableCard.tsx      # +coupleColorMap prop → SeatItem borderLeft colour
+src/components/SeatingChart/SeatingChart.tsx # +coupleColorMap prop → threads to TableCard
+src/components/LabelStep/GuestLabelRow.tsx  # +coupleColor borderLeft + pair checkbox props
+src/components/LabelStep/LabelStep.tsx      # +coupleColorMap +onPairGuests + pair bar UI
+
 UNCHANGED:
-src/components/TableCard/
-src/components/SeatingChart/
 src/components/GuestInput/
 src/index.css
 src/main.tsx
 
 VITE CONFIG:
 vite.config.ts                             # local-state-persist plugin (GET/POST /api/state)
+
+DEPLOYMENT:
+Dockerfile                                 # node:20-alpine build → nginx:alpine serve on :8080
+nginx.conf                                 # SPA routing + gzip
+.dockerignore
+.gitignore
 ```
 
 **Structure Decision**: Single SPA — no routing. Wizard state in `App.tsx` `useReducer`. Language in `LanguageContext`. Dual persistence: localStorage (sync) + file via Vite plugin (async, dev only).
@@ -111,7 +121,7 @@ vite.config.ts                             # local-state-persist plugin (GET/POS
 
 1. Update `src/types/index.ts` — add `labels: string[]` to `Guest`; add `availableLabels: string[]` to `SeatingPlan`
 2. Update `src/services/storageService.ts` — `SCHEMA_VERSION = 4`; `parsePlan`: v4 → load as-is; any other version → null
-3. Update `src/services/seatingAssigner.ts` — add `surnameBonus`, `computeAffinity` (label intersection + surname bonus), `greedyClustering`, `greedyHamiltonianPath`, `assignSeatsProximity`; keep `assignSeats` for no-label fallback
+3. Update `src/services/seatingAssigner.ts` — add `surnameBonus`, `computeAffinity` (label intersection + surname bonus), `greedyClustering`, `greedyHamiltonianPath`, `assignSeatsProximity`; keep `assignSeats` for no-label/no-couple fallback; add `assignCoupleIds` (adjacent surname match → shared `couple-N`); add `arrangeClusterWithCouples` (packs couple units sequentially on same side)
 4. Create `src/services/fileStateService.ts` — `saveToFile(plan)` → POST /api/state; `loadFromFile()` → GET /api/state; silent fail in production
 5. Update unit tests for services
 
@@ -151,6 +161,20 @@ vite.config.ts                             # local-state-persist plugin (GET/POS
 22. Run all 10 quickstart scenarios in `npm run dev`
 23. `npm run build` — no TypeScript errors
 24. 200-guest performance check — algorithm < 100ms
+
+### Phase H: Couple Detection + Coloring + Manual Pairing
+
+23. Add `coupleId: string | null` to `Guest` type; update `storageService` normalisation
+24. Add `assignCoupleIds` and `arrangeClusterWithCouples` to `seatingAssigner.ts`
+25. Add `COUPLE_PALETTE`, `coupleColorMap` useMemo, `PAIR_GUESTS` action to `App.tsx`; call `assignCoupleIds` in `PARSE_AND_ADVANCE`
+26. Update `GuestLabelRow`, `LabelStep`, `SeatingChart`, `TableCard` with couple color + pair checkbox UI
+27. Add `createCouple`/`createCoupleHint` keys to all three translation locales
+
+### Phase I: Cloud Run Deployment
+
+28. Create `Dockerfile`, `nginx.conf`, `.dockerignore`, `.gitignore`
+29. `gcloud run deploy --source .` to `europe-central2`, project `cusina-ai`
+30. Init git repo, push to `https://github.com/szczawinski/seat-planner`
 
 ## Complexity Tracking
 

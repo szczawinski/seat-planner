@@ -8,7 +8,7 @@
 
 | Entity | Change |
 |--------|--------|
-| `Guest` | Add `labels: string[]`; `name` is now editable via inline rename |
+| `Guest` | Add `labels: string[]`; `coupleId: string \| null`; `name` is now editable via inline rename |
 | `SeatingPlan` | Add `availableLabels: string[]`; bump `version` to `4` |
 | `AppState` | Add `step`, `availableLabels`; extended action set |
 | `StepIndicator` *(new UI)* | Current step drives visual indicator |
@@ -26,6 +26,7 @@
 | `id` | `string` | Required, unique | Generated on parse: `guest-${index}` |
 | `name` | `string` | Required, non-empty, trimmed | Editable via inline rename in Step 2 |
 | `labels` | `string[]` | Required, may be empty `[]` | Each string matches an entry in `availableLabels` |
+| `coupleId` | `string \| null` | — | Shared with partner; `null` if no couple detected. Format: `couple-N` |
 | `tableId` | `string \| null` | — | `null` before Step 3 assignment |
 | `seatIndex` | `number \| null` | 0-based | `null` before Step 3 assignment |
 
@@ -106,6 +107,7 @@ AppState {
 | `UPDATE_SEATS_PER_TABLE` | `number` | Updates `seatsPerTable`, clears `error` |
 | `ASSIGN` | — | Runs proximity algorithm → `assigned = true` → `step = 4` |
 | `REASSIGN` | — | Re-runs proximity algorithm; stays on `step = 4` |
+| `PAIR_GUESTS` | `{ idA, idB }` | Assigns a new shared `coupleId` to both guests; color map updates immediately |
 | `SELECT_GUEST` | `string \| null` | Sets `selectedGuestId` |
 | `SWAP_GUESTS` | `{ firstId, secondId }` | Atomically swaps seat positions; clears selection |
 | `RESTORE` | `Partial<AppState>` | Loads persisted v4 plan on mount |
@@ -155,15 +157,55 @@ Input:  Guest[] (with labels), tableCount, seatsPerTable
          │    path[0] = most-connected guest in cluster
          │    path[i+1] = argmax affinity(path[i], remaining)
          │
-         └─ Assign positions (interleaved left/right):
-              even i → left side: seatIndex = Math.floor(i/2)
-              odd  i → right side: seatIndex = leftCount + Math.floor(i/2)
+         ├─ arrangeClusterWithCouples(cluster, leftCount)
+         │    Build ordered units: couple-pairs kept together, singles separate
+         │    Pack units into left side (first leftCount seats), then right side
+         │    If a couple unit fits entirely on one side → placed adjacently
+         │    Couple units that don't fit → split individually as fallback
+         │
+         └─ Assign positions (sequential left/right):
+              seats 0..leftCount-1     → left side
+              seats leftCount..end     → right side
               leftCount = Math.ceil(capacity / 2)
+              Couples occupy consecutive indices → always adjacent on same side
 
 Output: Guest[] (with tableId/seatIndex), Table[]
 ```
 
-**No-label fallback**: if all guests have `labels.length === 0`, falls back to Fisher-Yates shuffle + round-robin assignment.
+**No-label, no-couple fallback**: if all guests have `labels.length === 0` AND all `coupleId === null`, falls back to Fisher-Yates shuffle + round-robin assignment.
+
+---
+
+## Couple Detection & Color Model
+
+### Auto-detection (`assignCoupleIds`)
+
+Runs on `PARSE_AND_ADVANCE`. Scans adjacent guest pairs in import order:
+- Extract surname parts (split on `-`, lowercase, min 2 chars)
+- `surnamePartsMatch(a, b)`: exact match OR common prefix ≥ 5 chars with trailing diff ≤ 3 chars each side (handles Kowalski/Kowalska)
+- If match found: assign `couple-N` to both; skip both on next iteration
+
+### Manual pairing (`PAIR_GUESTS`)
+
+Triggered from Step 2 UI. Counts existing unique `coupleId` values; assigns `couple-N` where N = count. Overwrites any prior `coupleId` on both guests.
+
+### Color derivation (`coupleColorMap`)
+
+Computed via `useMemo` in `AppContent`; never stored:
+
+```
+COUPLE_PALETTE = [
+  '#F4A0AA', '#A0BBF4', '#A0F0B0', '#F4E0A0',
+  '#C8A0F4', '#F4C0A0', '#A0F0E0', '#F4A0D8',
+]
+
+coupleColorMap: Map<guestId, colorHex>
+  For each guest with coupleId !== null:
+    index = coupleToIndex.get(coupleId) ?? (coupleToIndex.set(coupleId, idx++), idx-1)
+    map.set(guest.id, COUPLE_PALETTE[index % 8])
+```
+
+Displayed as `borderLeft: 4px solid <color>` on guest name in Step 2 (`GuestLabelRow`) and on seat item in Step 4 (`TableCard → SeatItem`).
 
 ---
 
