@@ -105,3 +105,22 @@
   border-radius: 3px;
   background: transparent;
 }
+
+.emptySeatTarget {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: #B8952A;
+  text-align: center;
+  border: 2px dashed #B8952A;
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+}
+
+.emptySeatTarget:hover,
+.emptySeatTarget:focus {
+  background: rgba(184, 149, 42, 0.12);
+  outline: none;
+}

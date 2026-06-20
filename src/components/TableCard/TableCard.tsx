@@ -8,6 +8,7 @@ interface TableCardProps {
   selectedGuestId: string | null
   coupleColorMap: Map<string, string>
   onGuestClick: (guestId: string) => void
+  onEmptySeatClick: (tableId: string, seatIndex: number) => void
 }
 
 function SeatItem({
@@ -16,16 +17,34 @@ function SeatItem({
   isSelected,
   selectedSuffix,
   coupleColor,
+  isDropTarget,
   onGuestClick,
+  onEmptySeatClick,
 }: {
   seatId: string | null
   guest: Guest | undefined
   isSelected: boolean
   selectedSuffix: string
   coupleColor?: string
+  isDropTarget: boolean
   onGuestClick: (id: string) => void
+  onEmptySeatClick: () => void
 }) {
   if (seatId === null) {
+    if (isDropTarget) {
+      return (
+        <div
+          className={styles.emptySeatTarget}
+          onClick={(e) => { e.stopPropagation(); onEmptySeatClick() }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEmptySeatClick() } }}
+          tabIndex={0}
+          role="button"
+          aria-label="Move guest here"
+        >
+          + →
+        </div>
+      )
+    }
     return <div className={styles.emptySeat}>— —</div>
   }
   return (
@@ -52,7 +71,7 @@ function SeatItem({
   )
 }
 
-export default function TableCard({ table, guests, selectedGuestId, coupleColorMap, onGuestClick }: TableCardProps) {
+export default function TableCard({ table, guests, selectedGuestId, coupleColorMap, onGuestClick, onEmptySeatClick }: TableCardProps) {
   const { t } = useLang()
   const guestMap = new Map(guests.map((g) => [g.id, g]))
   const leftCount = Math.ceil(table.capacity / 2)
@@ -72,7 +91,9 @@ export default function TableCard({ table, guests, selectedGuestId, coupleColorM
               isSelected={seatId === selectedGuestId}
               selectedSuffix={t.selectedSuffix}
               coupleColor={seatId ? coupleColorMap.get(seatId) : undefined}
+              isDropTarget={seatId === null && selectedGuestId !== null}
               onGuestClick={onGuestClick}
+              onEmptySeatClick={() => onEmptySeatClick(table.id, i)}
             />
           ))}
         </div>
@@ -91,7 +112,9 @@ export default function TableCard({ table, guests, selectedGuestId, coupleColorM
               isSelected={seatId === selectedGuestId}
               selectedSuffix={t.selectedSuffix}
               coupleColor={seatId ? coupleColorMap.get(seatId) : undefined}
+              isDropTarget={seatId === null && selectedGuestId !== null}
               onGuestClick={onGuestClick}
+              onEmptySeatClick={() => onEmptySeatClick(table.id, leftCount + i)}
             />
           ))}
         </div>

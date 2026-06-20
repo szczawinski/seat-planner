@@ -77,29 +77,57 @@ export function computeAffinity(a: Guest, b: Guest): number {
   return a.labels.filter((l) => b.labels.includes(l)).length + surnameBonus(a, b)
 }
 
+function buildUnits(guests: Guest[]): Guest[][] {
+  const units: Guest[][] = []
+  const added = new Set<string>()
+  for (const g of guests) {
+    if (added.has(g.id)) continue
+    added.add(g.id)
+    if (g.coupleId) {
+      const partner = guests.find(
+        (p) => p.coupleId === g.coupleId && p.id !== g.id && !added.has(p.id),
+      )
+      if (partner) {
+        added.add(partner.id)
+        units.push([g, partner])
+        continue
+      }
+    }
+    units.push([g])
+  }
+  return units
+}
+
 export function greedyClustering(
   guests: Guest[],
   tableCount: number,
   seatsPerTable: number,
 ): Guest[][] {
-  let remaining = fisherYatesShuffle([...guests])
+  // Treat couples as atomic units — they are never split across tables.
+  // Tables are allowed to have unequal guest counts as a result.
+  const units = buildUnits(fisherYatesShuffle([...guests]))
+  let remainingUnits = [...units]
   const clusters: Guest[][] = []
 
   for (let t = 0; t < tableCount; t++) {
-    if (remaining.length === 0) {
+    if (remainingUnits.length === 0) {
       clusters.push([])
       continue
     }
     const tablesLeft = tableCount - t
-    const targetSize = Math.min(Math.ceil(remaining.length / tablesLeft), seatsPerTable)
+    const totalRemaining = remainingUnits.reduce((sum, u) => sum + u.length, 0)
+    const targetSize = Math.ceil(totalRemaining / tablesLeft)
 
-    // Seed: guest with highest total affinity to all remaining guests
+    // Seed: unit with highest total affinity to all remaining guests
+    const allRemaining = remainingUnits.flat()
     let seedIdx = 0
     let maxAffSum = -1
-    for (let i = 0; i < remaining.length; i++) {
+    for (let i = 0; i < remainingUnits.length; i++) {
       let sum = 0
-      for (let j = 0; j < remaining.length; j++) {
-        if (i !== j) sum += computeAffinity(remaining[i], remaining[j])
+      for (const g of remainingUnits[i]) {
+        for (const other of allRemaining) {
+          if (other.id !== g.id) sum += computeAffinity(g, other)
+        }
       }
       if (sum > maxAffSum) {
         maxAffSum = sum
@@ -107,21 +135,27 @@ export function greedyClustering(
       }
     }
 
-    const cluster: Guest[] = [remaining[seedIdx]]
-    remaining = remaining.filter((_, i) => i !== seedIdx)
+    const cluster: Guest[] = [...remainingUnits[seedIdx]]
+    remainingUnits = remainingUnits.filter((_, i) => i !== seedIdx)
 
-    while (cluster.length < targetSize && remaining.length > 0) {
-      let bestIdx = 0
+    while (cluster.length < targetSize && remainingUnits.length > 0) {
+      let bestIdx = -1
       let bestAff = -1
-      for (let i = 0; i < remaining.length; i++) {
-        const aff = cluster.reduce((sum, c) => sum + computeAffinity(c, remaining[i]), 0)
+      for (let i = 0; i < remainingUnits.length; i++) {
+        // Never exceed table capacity — skip units that wouldn't fit
+        if (cluster.length + remainingUnits[i].length > seatsPerTable) continue
+        const aff = remainingUnits[i].reduce(
+          (sum, g) => sum + cluster.reduce((s, c) => s + computeAffinity(c, g), 0),
+          0,
+        )
         if (aff > bestAff) {
           bestAff = aff
           bestIdx = i
         }
       }
-      cluster.push(remaining[bestIdx])
-      remaining = remaining.filter((_, i) => i !== bestIdx)
+      if (bestIdx === -1) break // nothing fits within capacity
+      cluster.push(...remainingUnits[bestIdx])
+      remainingUnits = remainingUnits.filter((_, i) => i !== bestIdx)
     }
 
     clusters.push(cluster)

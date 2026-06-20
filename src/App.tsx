@@ -53,6 +53,7 @@ type AppAction =
   | { type: 'RENAME_GUEST'; payload: { guestId: string; newName: string } }
   | { type: 'PAIR_GUESTS'; payload: { idA: string; idB: string } }
   | { type: 'SELECT_GUEST'; payload: string | null }
+  | { type: 'MOVE_GUEST'; payload: { guestId: string; toTableId: string; toSeatIndex: number } }
   | { type: 'SWAP_GUESTS'; payload: { firstId: string; secondId: string } }
   | {
       type: 'RESTORE'
@@ -195,6 +196,26 @@ function reducer(state: AppState, action: AppAction): AppState {
     case 'SELECT_GUEST':
       return { ...state, selectedGuestId: action.payload }
 
+    case 'MOVE_GUEST': {
+      const { guestId, toTableId, toSeatIndex } = action.payload
+      const guest = state.guests.find((g) => g.id === guestId)
+      if (!guest) return { ...state, selectedGuestId: null }
+      const newGuests = state.guests.map((g) =>
+        g.id === guestId ? { ...g, tableId: toTableId, seatIndex: toSeatIndex } : g,
+      )
+      const newTables = state.tables.map((t) => {
+        const newSeats = [...t.seats]
+        if (t.id === guest.tableId && guest.seatIndex !== null) {
+          newSeats[guest.seatIndex] = null
+        }
+        if (t.id === toTableId) {
+          newSeats[toSeatIndex] = guestId
+        }
+        return { ...t, seats: newSeats }
+      })
+      return { ...state, guests: newGuests, tables: newTables, selectedGuestId: null }
+    }
+
     case 'SWAP_GUESTS': {
       const { firstId, secondId } = action.payload
       const first = state.guests.find((g) => g.id === firstId)
@@ -325,6 +346,12 @@ function AppContent() {
     }
   }
 
+  function handleEmptySeatClick(tableId: string, seatIndex: number) {
+    if (state.selectedGuestId !== null) {
+      dispatch({ type: 'MOVE_GUEST', payload: { guestId: state.selectedGuestId, toTableId: tableId, toSeatIndex: seatIndex } })
+    }
+  }
+
   const coupleColorMap = useMemo(() => {
     const map = new Map<string, string>()
     const coupleToIndex = new Map<string, number>()
@@ -452,6 +479,7 @@ function AppContent() {
                 selectedGuestId={state.selectedGuestId}
                 coupleColorMap={coupleColorMap}
                 onGuestClick={handleGuestClick}
+                onEmptySeatClick={handleEmptySeatClick}
               />
             </section>
           </>
