@@ -1,0 +1,19 @@
+.picker {
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid #D4B483;
+  border-radius: 3px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.85rem;
+  color: #8B6B4A;
+  cursor: pointer;
+  appearance: auto;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.picker:hover,
+.picker:focus {
+  border-color: #B8952A;
+  color: #2C1208;
+  outline: none;
+}

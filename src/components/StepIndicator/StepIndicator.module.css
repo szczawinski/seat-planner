@@ -1,0 +1,76 @@
+.container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 8px 0 28px;
+  gap: 0;
+  list-style: none;
+}
+
+.stepItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nodeRow {
+  display: flex;
+  align-items: center;
+}
+
+.node {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 2px solid #C4B49A;
+  color: #C4B49A;
+  background: transparent;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  user-select: none;
+}
+
+.completed {
+  background: #B8952A;
+  border-color: #B8952A;
+  color: #FFFDF7;
+}
+
+.active {
+  background: #7B1E2A;
+  border-color: #7B1E2A;
+  color: #FFFDF7;
+}
+
+.connector {
+  height: 2px;
+  width: 64px;
+  background: #C4B49A;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.connectorDone {
+  background: #B8952A;
+}
+
+.stepLabel {
+  margin-top: 8px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.72rem;
+  color: #C4B49A;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.stepLabelActive {
+  color: #7B1E2A;
+  font-weight: 600;
+}
