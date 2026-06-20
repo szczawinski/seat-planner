@@ -10,7 +10,7 @@ import {
 import type { Guest } from '../../src/types'
 
 function makeGuest(name: string, labels: string[] = [], index = 0): Guest {
-  return { id: `guest-${index}`, name, labels, tableId: null, seatIndex: null }
+  return { id: `guest-${index}`, name, labels, coupleId: null, tableId: null, seatIndex: null }
 }
 
 function makeGuests(names: string[]): Guest[] {
@@ -20,12 +20,29 @@ function makeGuests(names: string[]): Guest[] {
 describe('parseGuests', () => {
   it('filters blank lines and trims whitespace', () => {
     const result = parseGuests('Alice\n  \nBob\n  Carol  \n')
-    expect(result).toEqual(['Alice', 'Bob', 'Carol'])
+    expect(result).toEqual([
+      { name: 'Alice', labels: [] },
+      { name: 'Bob', labels: [] },
+      { name: 'Carol', labels: [] },
+    ])
   })
 
   it('returns empty array for blank input', () => {
     expect(parseGuests('')).toEqual([])
     expect(parseGuests('  \n  \n')).toEqual([])
+  })
+
+  it('parses CSV labels after the name', () => {
+    const result = parseGuests('Jan Nowak, Magda, Family\nAnna Nowak')
+    expect(result).toEqual([
+      { name: 'Jan Nowak', labels: ['Magda', 'Family'] },
+      { name: 'Anna Nowak', labels: [] },
+    ])
+  })
+
+  it('trims label whitespace', () => {
+    const result = parseGuests('Jan Nowak ,  Magda ,Family ')
+    expect(result[0].labels).toEqual(['Magda', 'Family'])
   })
 })
 

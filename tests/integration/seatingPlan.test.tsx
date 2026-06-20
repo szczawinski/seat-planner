@@ -11,7 +11,7 @@ beforeEach(() => {
 /** Navigate through the wizard to assign seats and land on step 4. */
 function assignSeats(guestList: string, tables: number, seatsPerTable: number) {
   // Step 1: enter guests and advance
-  const textarea = screen.getByRole('textbox', { name: /guest names/i })
+  const textarea = screen.getByRole('textbox', { name: /guest list/i })
   fireEvent.change(textarea, { target: { value: guestList } })
   fireEvent.click(screen.getByRole('button', { name: /next/i }))
 

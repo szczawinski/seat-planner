@@ -1,10 +1,15 @@
 import type { Guest, Table } from '../types'
 
-export function parseGuests(rawText: string): string[] {
+export function parseGuests(rawText: string): { name: string; labels: string[] }[] {
   return rawText
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
+    .map((line) => {
+      const parts = line.split(',').map((p) => p.trim()).filter((p) => p.length > 0)
+      return { name: parts[0] ?? '', labels: parts.slice(1) }
+    })
+    .filter(({ name }) => name.length > 0)
 }
 
 export function validatePlan(

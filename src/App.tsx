@@ -87,26 +87,41 @@ function reducer(state: AppState, action: AppAction): AppState {
       return { ...state, rawGuestText: action.payload, error: null }
 
     case 'PARSE_AND_ADVANCE': {
-      const names = parseGuests(state.rawGuestText)
-      if (names.length === 0) {
+      const parsed = parseGuests(state.rawGuestText)
+      if (parsed.length === 0) {
         return { ...state, error: 'ERR_NO_GUESTS' }
       }
       const existingByName = new Map(state.guests.map((g) => [g.name, g]))
-      const raw: Guest[] = names.map((name, i) =>
-        existingByName.get(name) ?? {
-          id: `guest-${i}`,
-          name,
-          labels: [],
-          coupleId: null,
-          tableId: null,
-          seatIndex: null,
-        },
+
+      const allParsedLabels = parsed.flatMap(({ labels }) => labels)
+      const brandNewLabels = [...new Set(allParsedLabels)].filter(
+        (l) => !state.availableLabels.includes(l),
       )
-      return { ...state, guests: assignCoupleIds(raw), step: 2, error: null }
+      const availableLabels =
+        brandNewLabels.length > 0
+          ? [...state.availableLabels, ...brandNewLabels]
+          : state.availableLabels
+
+      const raw: Guest[] = parsed.map(({ name, labels }, i) => {
+        const existing = existingByName.get(name)
+        if (existing) {
+          const merged = [...existing.labels]
+          for (const l of labels) {
+            if (!merged.includes(l)) merged.push(l)
+          }
+          return { ...existing, labels: merged }
+        }
+        return { id: `guest-${i}`, name, labels, coupleId: null, tableId: null, seatIndex: null }
+      })
+      return { ...state, guests: assignCoupleIds(raw), availableLabels, step: 2, error: null }
     }
 
-    case 'GO_BACK_TO_IMPORT':
-      return { ...state, step: 1, error: null }
+    case 'GO_BACK_TO_IMPORT': {
+      const rawGuestText = state.guests
+        .map((g) => (g.labels.length > 0 ? `${g.name}, ${g.labels.join(', ')}` : g.name))
+        .join('\n')
+      return { ...state, rawGuestText, step: 1, error: null }
+    }
 
     case 'TOGGLE_GUEST_LABEL': {
       const { guestId, label } = action.payload
