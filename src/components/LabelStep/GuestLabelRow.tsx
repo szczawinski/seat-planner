@@ -6,6 +6,7 @@ import styles from './GuestLabelRow.module.css'
 
 interface GuestLabelRowProps {
   guest: Guest
+  ordinal: number
   availableLabels: string[]
   labelPalette: { bg: string; text: string }[]
   coupleColor?: string
@@ -18,6 +19,7 @@ interface GuestLabelRowProps {
 
 export default function GuestLabelRow({
   guest,
+  ordinal,
   availableLabels,
   labelPalette,
   coupleColor,
@@ -55,6 +57,7 @@ export default function GuestLabelRow({
 
   return (
     <div className={styles.row}>
+      <span className={styles.ordinal}>{ordinal}.</span>
       <input
         type="checkbox"
         className={styles.pairCheckbox}

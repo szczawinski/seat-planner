@@ -60,6 +60,16 @@
   gap: 6px;
 }
 
+.ordinal {
+  min-width: 28px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.85rem;
+  color: #C4B49A;
+  flex-shrink: 0;
+  text-align: right;
+  user-select: none;
+}
+
 .pairCheckbox {
   appearance: none;
   -webkit-appearance: none;

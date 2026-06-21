@@ -65,6 +65,12 @@ export default function LabelStep({
     }
   }
 
+  const sortedGuests = [...guests].sort((a, b) => {
+    const numA = parseInt(a.id.split('-')[1] ?? '0') || 0
+    const numB = parseInt(b.id.split('-')[1] ?? '0') || 0
+    return numA - numB
+  })
+
   const pairReady = checkedForPair.length === 2
   const pairNames = checkedForPair.map((id) => guests.find((g) => g.id === id)?.name ?? id)
 
@@ -75,10 +81,11 @@ export default function LabelStep({
         <p className={styles.subheading}>{t.assignGroupsSubheading}</p>
 
         <div className={styles.guestList}>
-          {guests.map((guest) => (
+          {sortedGuests.map((guest, i) => (
             <GuestLabelRow
               key={guest.id}
               guest={guest}
+              ordinal={i + 1}
               availableLabels={availableLabels}
               labelPalette={PALETTE}
               coupleColor={coupleColorMap.get(guest.id)}
