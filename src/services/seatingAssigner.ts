@@ -195,17 +195,20 @@ export function greedyHamiltonianPath(cluster: Guest[]): Guest[] {
 }
 
 export function assignCoupleIds(guests: Guest[]): Guest[] {
-  const result = guests.map((g) => ({ ...g, coupleId: null as string | null }))
-  let coupleIndex = 0
+  const result = guests.map((g) => ({ ...g }))
+  // Start index after any already-existing couple IDs to avoid collisions
+  const existingCount = new Set(result.map((g) => g.coupleId).filter(Boolean)).size
+  let coupleIndex = existingCount
   for (let i = 0; i < result.length - 1; i++) {
     if (result[i].coupleId !== null) continue
+    if (result[i + 1].coupleId !== null) continue
     const partsA = surnameParts(result[i].name)
     const partsB = surnameParts(result[i + 1].name)
     if (partsA.length > 0 && partsB.length > 0 && partsA.some((x) => partsB.some((y) => surnamePartsMatch(x, y)))) {
       const id = `couple-${coupleIndex++}`
       result[i] = { ...result[i], coupleId: id }
       result[i + 1] = { ...result[i + 1], coupleId: id }
-      i++ // skip the partner on the next iteration
+      i++
     }
   }
   return result
