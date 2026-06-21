@@ -25,6 +25,25 @@
   letter-spacing: 0.03em;
 }
 
+.seatsInput {
+  width: 200px;
+  padding: 10px 12px;
+  border: 1px solid #D4B483;
+  border-radius: 3px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1rem;
+  background: #FFFDF7;
+  color: #2C1208;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.seatsInput:focus {
+  outline: none;
+  border-color: #B8952A;
+  box-shadow: 0 0 0 3px rgba(184, 149, 42, 0.12);
+}
+
 .input {
   width: 96px;
   padding: 10px 12px;

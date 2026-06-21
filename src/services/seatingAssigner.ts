@@ -12,21 +12,11 @@ export function parseGuests(rawText: string): { name: string; labels: string[] }
     .filter(({ name }) => name.length > 0)
 }
 
-export function validatePlan(
-  guests: Guest[],
-  tableCount: number,
-  seatsPerTable: number,
-): string | null {
-  if (guests.length === 0) {
-    return 'ERR_NO_GUESTS_ASSIGN'
-  }
-  if (tableCount < 1) {
-    return 'ERR_NO_TABLES'
-  }
-  if (seatsPerTable < 1) {
-    return 'ERR_NO_SEATS'
-  }
-  const totalCapacity = tableCount * seatsPerTable
+export function validatePlan(guests: Guest[], tableSeatCounts: number[]): string | null {
+  if (guests.length === 0) return 'ERR_NO_GUESTS_ASSIGN'
+  if (tableSeatCounts.length < 1) return 'ERR_NO_TABLES'
+  if (tableSeatCounts.some((s) => s < 1)) return 'ERR_NO_SEATS'
+  const totalCapacity = tableSeatCounts.reduce((sum, s) => sum + s, 0)
   if (totalCapacity < guests.length) {
     return `ERR_CAPACITY_EXCEEDED:${totalCapacity}:${guests.length}`
   }
@@ -42,12 +32,12 @@ function fisherYatesShuffle<T>(arr: T[]): T[] {
   return shuffled
 }
 
-function makeTables(tableCount: number, seatsPerTable: number): Table[] {
-  return Array.from({ length: tableCount }, (_, i) => ({
+function makeTables(tableSeatCounts: number[]): Table[] {
+  return tableSeatCounts.map((capacity, i) => ({
     id: `table-${i + 1}`,
     label: `Table ${i + 1}`,
-    capacity: seatsPerTable,
-    seats: Array<string | null>(seatsPerTable).fill(null),
+    capacity,
+    seats: Array<string | null>(capacity).fill(null),
   }))
 }
 
@@ -103,31 +93,27 @@ function buildUnits(guests: Guest[]): Guest[][] {
   return units
 }
 
-export function greedyClustering(
-  guests: Guest[],
-  tableCount: number,
-  seatsPerTable: number,
-): Guest[][] {
-  // Treat couples as atomic units — they are never split across tables.
-  // Tables are allowed to have unequal guest counts as a result.
+export function greedyClustering(guests: Guest[], tableSeatCounts: number[]): Guest[][] {
+  const tableCount = tableSeatCounts.length
   const units = buildUnits(fisherYatesShuffle([...guests]))
   let remainingUnits = [...units]
   const clusters: Guest[][] = []
 
   for (let t = 0; t < tableCount; t++) {
+    const capacity = tableSeatCounts[t]
     if (remainingUnits.length === 0) {
       clusters.push([])
       continue
     }
     const tablesLeft = tableCount - t
     const totalRemaining = remainingUnits.reduce((sum, u) => sum + u.length, 0)
-    const targetSize = Math.ceil(totalRemaining / tablesLeft)
+    const targetSize = Math.min(capacity, Math.ceil(totalRemaining / tablesLeft))
 
-    // Seed: unit with highest total affinity to all remaining guests
     const allRemaining = remainingUnits.flat()
     let seedIdx = 0
     let maxAffSum = -1
     for (let i = 0; i < remainingUnits.length; i++) {
+      if (remainingUnits[i].length > capacity) continue
       let sum = 0
       for (const g of remainingUnits[i]) {
         for (const other of allRemaining) {
@@ -140,6 +126,8 @@ export function greedyClustering(
       }
     }
 
+    if (maxAffSum === -1) { clusters.push([]); continue }
+
     const cluster: Guest[] = [...remainingUnits[seedIdx]]
     remainingUnits = remainingUnits.filter((_, i) => i !== seedIdx)
 
@@ -147,8 +135,7 @@ export function greedyClustering(
       let bestIdx = -1
       let bestAff = -1
       for (let i = 0; i < remainingUnits.length; i++) {
-        // Never exceed table capacity — skip units that wouldn't fit
-        if (cluster.length + remainingUnits[i].length > seatsPerTable) continue
+        if (cluster.length + remainingUnits[i].length > capacity) continue
         const aff = remainingUnits[i].reduce(
           (sum, g) => sum + cluster.reduce((s, c) => s + computeAffinity(c, g), 0),
           0,
@@ -158,7 +145,7 @@ export function greedyClustering(
           bestIdx = i
         }
       }
-      if (bestIdx === -1) break // nothing fits within capacity
+      if (bestIdx === -1) break
       cluster.push(...remainingUnits[bestIdx])
       remainingUnits = remainingUnits.filter((_, i) => i !== bestIdx)
     }
@@ -274,22 +261,21 @@ function arrangeClusterWithCouples(cluster: Guest[], leftCount: number): Guest[]
 
 export function assignSeatsProximity(
   guests: Guest[],
-  tableCount: number,
-  seatsPerTable: number,
+  tableSeatCounts: number[],
 ): { guests: Guest[]; tables: Table[] } {
   const allHaveNoLabels = guests.every((g) => g.labels.length === 0)
   const allHaveNoCouples = guests.every((g) => !g.coupleId)
 
   if (allHaveNoLabels && allHaveNoCouples) {
-    return assignSeats(guests, tableCount, seatsPerTable)
+    return assignSeats(guests, tableSeatCounts)
   }
 
-  const tables = makeTables(tableCount, seatsPerTable)
-  const clusters = greedyClustering(guests, tableCount, seatsPerTable)
+  const tables = makeTables(tableSeatCounts)
+  const clusters = greedyClustering(guests, tableSeatCounts)
   const newGuests: Guest[] = []
-  const leftCount = Math.ceil(seatsPerTable / 2)
 
   clusters.forEach((cluster, tableIndex) => {
+    const leftCount = Math.ceil(tableSeatCounts[tableIndex] / 2)
     const arranged = arrangeClusterWithCouples(cluster, leftCount)
     arranged.forEach((guest, i) => {
       tables[tableIndex].seats[i] = guest.id
@@ -302,19 +288,18 @@ export function assignSeatsProximity(
 
 export function assignSeats(
   guestList: Guest[],
-  tableCount: number,
-  seatsPerTable: number,
+  tableSeatCounts: number[],
 ): { guests: Guest[]; tables: Table[] } {
   const shuffled = fisherYatesShuffle([...guestList])
-  const tables = makeTables(tableCount, seatsPerTable)
-
-  const guests: Guest[] = shuffled.map((guest, index) => {
-    const tableIndex = index % tableCount
-    const seatIndex = Math.floor(index / tableCount)
-    const tableId = tables[tableIndex].id
-    tables[tableIndex].seats[seatIndex] = guest.id
-    return { ...guest, tableId, seatIndex }
-  })
-
+  const tables = makeTables(tableSeatCounts)
+  const guests: Guest[] = []
+  let guestIdx = 0
+  for (let t = 0; t < tables.length; t++) {
+    for (let s = 0; s < tableSeatCounts[t] && guestIdx < shuffled.length; s++) {
+      const guest = shuffled[guestIdx++]
+      tables[t].seats[s] = guest.id
+      guests.push({ ...guest, tableId: tables[t].id, seatIndex: s })
+    }
+  }
   return { guests, tables }
 }

@@ -93,7 +93,27 @@
 .stepNav {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
   margin-top: 8px;
+}
+
+.importButton {
+  padding: 8px 20px;
+  background: transparent;
+  color: #8B6B4A;
+  border: 1px solid #D4B483;
+  border-radius: 3px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.importButton:hover {
+  background: #F5EDD8;
+  border-color: #B8952A;
 }
 
 .navButton {

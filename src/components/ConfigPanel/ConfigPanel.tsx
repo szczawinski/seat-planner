@@ -1,29 +1,47 @@
+import { useState, useEffect, useRef } from 'react'
 import { useLang } from '../../i18n/LanguageContext'
 import styles from './ConfigPanel.module.css'
 
 interface ConfigPanelProps {
   tableCount: number
-  seatsPerTable: number
+  tableSeatCounts: number[]
   onTableCountChange: (n: number) => void
-  onSeatsPerTableChange: (n: number) => void
+  onTableSeatsChange: (text: string) => void
   onAssign: () => void
   onBack: () => void
   guestCount: number
   error: string | null
 }
 
+function computeSeatsText(counts: number[]): string {
+  if (counts.length === 0) return ''
+  const allEqual = counts.every((v) => v === counts[0])
+  return allEqual ? String(counts[0]) : counts.join(', ')
+}
+
 export default function ConfigPanel({
   tableCount,
-  seatsPerTable,
+  tableSeatCounts,
   onTableCountChange,
-  onSeatsPerTableChange,
+  onTableSeatsChange,
   onAssign,
   onBack,
   guestCount,
   error,
 }: ConfigPanelProps) {
   const { t } = useLang()
-  const totalSeats = tableCount * seatsPerTable
+  const [seatsText, setSeatsText] = useState(() => computeSeatsText(tableSeatCounts))
+  const prevLengthRef = useRef(tableSeatCounts.length)
+
+  useEffect(() => {
+    if (tableSeatCounts.length !== prevLengthRef.current) {
+      prevLengthRef.current = tableSeatCounts.length
+      setSeatsText(computeSeatsText(tableSeatCounts))
+    }
+  }, [tableSeatCounts])
+
+  const totalSeats = tableSeatCounts.reduce((sum, n) => sum + n, 0)
+
   return (
     <div className={styles.panel}>
       <p className={styles.guestSummary}>{t.guestSummary(guestCount, totalSeats)}</p>
@@ -47,11 +65,12 @@ export default function ConfigPanel({
           </label>
           <input
             id="seats-per-table"
-            type="number"
-            min={1}
-            className={styles.input}
-            value={seatsPerTable}
-            onChange={(e) => onSeatsPerTableChange(Math.max(1, parseInt(e.target.value) || 1))}
+            type="text"
+            className={styles.seatsInput}
+            value={seatsText}
+            placeholder="6"
+            onChange={(e) => setSeatsText(e.target.value)}
+            onBlur={() => onTableSeatsChange(seatsText)}
           />
         </div>
         <button className={styles.button} onClick={onAssign} aria-label={t.assignAriaLabel}>

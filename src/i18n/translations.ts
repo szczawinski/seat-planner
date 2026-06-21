@@ -34,6 +34,8 @@ export interface Translation {
   }
   createCouple: string
   createCoupleHint: string
+  exportJson: string
+  importJson: string
   languageLabel: string
 }
 
@@ -87,6 +89,8 @@ const pl: Translation = {
   },
   createCouple: 'Stwórz parę',
   createCoupleHint: 'Zaznacz dokładnie 2 osoby, aby je sparować.',
+  exportJson: 'Eksportuj JSON',
+  importJson: 'Importuj JSON',
   languageLabel: 'Język',
 }
 
@@ -127,6 +131,8 @@ const en: Translation = {
   },
   createCouple: 'Create couple',
   createCoupleHint: 'Select exactly 2 guests to pair them.',
+  exportJson: 'Export JSON',
+  importJson: 'Import JSON',
   languageLabel: 'Language',
 }
 
@@ -167,6 +173,8 @@ const it: Translation = {
   },
   createCouple: 'Crea coppia',
   createCoupleHint: 'Seleziona esattamente 2 ospiti per accoppiarli.',
+  exportJson: 'Esporta JSON',
+  importJson: 'Importa JSON',
   languageLabel: 'Lingua',
 }
 

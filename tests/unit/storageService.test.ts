@@ -4,7 +4,7 @@ import type { SeatingPlan } from '../../src/types'
 
 const mockPlan: SeatingPlan = {
   version: 4,
-  config: { tableCount: 2, seatsPerTable: 3, rawGuestText: 'Alice\nBob' },
+  config: { tableCount: 2, seatsPerTable: 3, tableSeatCounts: [3, 3], rawGuestText: 'Alice\nBob' },
   guests: [
     { id: 'guest-0', name: 'Alice', labels: ['Magda', 'Family'], coupleId: null, tableId: 'table-1', seatIndex: 0 },
     { id: 'guest-1', name: 'Bob', labels: [], coupleId: null, tableId: 'table-2', seatIndex: 0 },

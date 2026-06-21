@@ -8,8 +8,10 @@ export function parsePlan(data: any): SeatingPlan | null {
   if (!data || typeof data !== 'object') return null
   if (data.version !== SCHEMA_VERSION) return null
   const plan = data as SeatingPlan
-  // Ensure coupleId exists on every guest (field added after initial v4 release)
   plan.guests = plan.guests.map((g) => ({ ...g, coupleId: g.coupleId ?? null }))
+  if (!plan.config.tableSeatCounts?.length) {
+    plan.config.tableSeatCounts = Array(plan.config.tableCount).fill(plan.config.seatsPerTable)
+  }
   return plan
 }
 

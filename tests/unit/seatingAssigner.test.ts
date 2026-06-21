@@ -48,28 +48,32 @@ describe('parseGuests', () => {
 
 describe('validatePlan', () => {
   it('returns null when plan is valid', () => {
-    expect(validatePlan(makeGuests(['Alice', 'Bob']), 2, 2)).toBeNull()
+    expect(validatePlan(makeGuests(['Alice', 'Bob']), [2, 2])).toBeNull()
   })
 
   it('returns error for empty guest list', () => {
-    expect(validatePlan([], 4, 5)).toBe('ERR_NO_GUESTS_ASSIGN')
+    expect(validatePlan([], [5, 5, 5, 5])).toBe('ERR_NO_GUESTS_ASSIGN')
   })
 
   it('returns error for zero tables', () => {
-    expect(validatePlan(makeGuests(['Alice']), 0, 5)).toBe('ERR_NO_TABLES')
+    expect(validatePlan(makeGuests(['Alice']), [])).toBe('ERR_NO_TABLES')
   })
 
   it('returns error for zero seats per table', () => {
-    expect(validatePlan(makeGuests(['Alice']), 2, 0)).toBe('ERR_NO_SEATS')
+    expect(validatePlan(makeGuests(['Alice']), [0, 0])).toBe('ERR_NO_SEATS')
   })
 
   it('returns error when guests exceed capacity', () => {
-    const error = validatePlan(makeGuests(['A', 'B', 'C', 'D', 'E']), 2, 2)
+    const error = validatePlan(makeGuests(['A', 'B', 'C', 'D', 'E']), [2, 2])
     expect(error).toBe('ERR_CAPACITY_EXCEEDED:4:5')
   })
 
   it('accepts guests equal to capacity', () => {
-    expect(validatePlan(makeGuests(['A', 'B', 'C', 'D']), 2, 2)).toBeNull()
+    expect(validatePlan(makeGuests(['A', 'B', 'C', 'D']), [2, 2])).toBeNull()
+  })
+
+  it('accepts variable seat counts', () => {
+    expect(validatePlan(makeGuests(Array.from({ length: 88 }, (_, i) => `G${i}`)), [20, 24, 24, 20])).toBeNull()
   })
 })
 
@@ -128,7 +132,7 @@ describe('computeAffinity', () => {
 describe('greedyClustering', () => {
   it('returns tableCount clusters', () => {
     const guests = makeGuests(['A', 'B', 'C', 'D', 'E', 'F'])
-    const clusters = greedyClustering(guests, 3, 2)
+    const clusters = greedyClustering(guests, [2, 2, 2])
     expect(clusters).toHaveLength(3)
   })
 
@@ -140,7 +144,7 @@ describe('greedyClustering', () => {
       makeGuest(n, ["Piotr's Family"], i + 3),
     )
     const guests = [...family1, ...family2]
-    const clusters = greedyClustering(guests, 2, 3)
+    const clusters = greedyClustering(guests, [3, 3])
 
     expect(clusters).toHaveLength(2)
 
@@ -160,7 +164,7 @@ describe('greedyClustering', () => {
 
   it('distributes all guests across clusters with no omissions', () => {
     const guests = makeGuests(['A', 'B', 'C', 'D', 'E'])
-    const clusters = greedyClustering(guests, 2, 3)
+    const clusters = greedyClustering(guests, [3, 3])
     const total = clusters.reduce((sum, c) => sum + c.length, 0)
     expect(total).toBe(5)
   })
@@ -205,7 +209,7 @@ describe('greedyHamiltonianPath', () => {
 describe('assignSeats', () => {
   it('assigns all guests — even distribution (20 guests, 4 tables, 5 seats)', () => {
     const guestList = makeGuests(Array.from({ length: 20 }, (_, i) => `Guest ${i + 1}`))
-    const { guests, tables } = assignSeats(guestList, 4, 5)
+    const { guests, tables } = assignSeats(guestList, [5, 5, 5, 5])
 
     expect(guests).toHaveLength(20)
     expect(tables).toHaveLength(4)
@@ -217,7 +221,7 @@ describe('assignSeats', () => {
 
   it('distributes unevenly without omissions (22 guests, 4 tables, 6 seats)', () => {
     const guestList = makeGuests(Array.from({ length: 22 }, (_, i) => `Guest ${i + 1}`))
-    const { guests, tables } = assignSeats(guestList, 4, 6)
+    const { guests, tables } = assignSeats(guestList, [6, 6, 6, 6])
 
     expect(guests).toHaveLength(22)
     const totalAssigned = tables.reduce(
@@ -229,7 +233,7 @@ describe('assignSeats', () => {
 
   it('each guest appears exactly once across all table seats', () => {
     const guestList = makeGuests(['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank'])
-    const { guests, tables } = assignSeats(guestList, 2, 3)
+    const { guests, tables } = assignSeats(guestList, [3, 3])
 
     const seatedIds = tables.flatMap((t) => t.seats.filter(Boolean)) as string[]
     const guestIds = guests.map((g) => g.id)
@@ -238,7 +242,7 @@ describe('assignSeats', () => {
 
   it('guest tableId and seatIndex are consistent with table.seats', () => {
     const guestList = makeGuests(['Alice', 'Bob', 'Carol', 'Dave'])
-    const { guests, tables } = assignSeats(guestList, 2, 2)
+    const { guests, tables } = assignSeats(guestList, [2, 2])
 
     guests.forEach((guest) => {
       const table = tables.find((t) => t.id === guest.tableId)
@@ -249,14 +253,14 @@ describe('assignSeats', () => {
 
   it('handles single guest', () => {
     const guestList = [makeGuest('Solo', [], 0)]
-    const { guests, tables } = assignSeats(guestList, 3, 2)
+    const { guests, tables } = assignSeats(guestList, [2, 2, 2])
     expect(guests).toHaveLength(1)
     expect(guests[0].tableId).not.toBeNull()
     expect(guests[0].seatIndex).not.toBeNull()
   })
 
   it('generates correct table labels', () => {
-    const { tables } = assignSeats(makeGuests(['A', 'B']), 2, 1)
+    const { tables } = assignSeats(makeGuests(['A', 'B']), [1, 1])
     expect(tables[0].label).toBe('Table 1')
     expect(tables[1].label).toBe('Table 2')
   })
@@ -266,8 +270,20 @@ describe('assignSeats', () => {
       makeGuest('Alice', ["Magda's Family"], 0),
       makeGuest('Bob', ["Piotr's Family"], 1),
     ]
-    const { guests } = assignSeats(guestList, 2, 1)
+    const { guests } = assignSeats(guestList, [1, 1])
     const alice = guests.find((g) => g.name === 'Alice')!
     expect(alice.labels).toEqual(["Magda's Family"])
+  })
+
+  it('supports variable seat counts per table', () => {
+    const guestList = makeGuests(Array.from({ length: 88 }, (_, i) => `Guest ${i + 1}`))
+    const { guests, tables } = assignSeats(guestList, [20, 24, 24, 20])
+    expect(guests).toHaveLength(88)
+    expect(tables[0].capacity).toBe(20)
+    expect(tables[1].capacity).toBe(24)
+    expect(tables[2].capacity).toBe(24)
+    expect(tables[3].capacity).toBe(20)
+    const totalAssigned = tables.reduce((s, t) => s + t.seats.filter(Boolean).length, 0)
+    expect(totalAssigned).toBe(88)
   })
 })

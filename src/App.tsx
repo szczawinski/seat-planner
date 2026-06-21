@@ -6,7 +6,7 @@ import {
   assignSeatsProximity,
   assignCoupleIds,
 } from './services/seatingAssigner'
-import { save, load } from './services/storageService'
+import { save, load, parsePlan } from './services/storageService'
 import { saveToFile, loadFromFile } from './services/fileStateService'
 import { LanguageProvider, useLang } from './i18n/LanguageContext'
 import { translateError } from './i18n/translations'
@@ -31,6 +31,7 @@ interface AppState {
   availableLabels: string[]
   tableCount: number
   seatsPerTable: number
+  tableSeatCounts: number[]
   guests: Guest[]
   tables: Table[]
   assigned: boolean
@@ -47,7 +48,7 @@ type AppAction =
   | { type: 'GO_TO_CONFIGURE' }
   | { type: 'GO_BACK_TO_LABELS' }
   | { type: 'UPDATE_TABLE_COUNT'; payload: number }
-  | { type: 'UPDATE_SEATS_PER_TABLE'; payload: number }
+  | { type: 'UPDATE_TABLE_SEATS'; payload: string }
   | { type: 'ASSIGN' }
   | { type: 'REASSIGN' }
   | { type: 'RENAME_GUEST'; payload: { guestId: string; newName: string } }
@@ -61,6 +62,7 @@ type AppAction =
         rawGuestText: string
         tableCount: number
         seatsPerTable: number
+        tableSeatCounts: number[]
         guests: Guest[]
         tables: Table[]
         assigned: boolean
@@ -74,6 +76,7 @@ const initialState: AppState = {
   availableLabels: DEFAULT_LABELS,
   tableCount: 4,
   seatsPerTable: 6,
+  tableSeatCounts: [6, 6, 6, 6],
   guests: [],
   tables: [],
   assigned: false,
@@ -148,22 +151,38 @@ function reducer(state: AppState, action: AppAction): AppState {
     case 'GO_BACK_TO_LABELS':
       return { ...state, step: 2, assigned: false, tables: [], selectedGuestId: null, error: null }
 
-    case 'UPDATE_TABLE_COUNT':
-      return { ...state, tableCount: action.payload, error: null }
+    case 'UPDATE_TABLE_COUNT': {
+      const newCount = Math.max(1, action.payload)
+      const cur = state.tableSeatCounts
+      const newCounts =
+        newCount > cur.length
+          ? [...cur, ...Array(newCount - cur.length).fill(state.seatsPerTable)]
+          : cur.slice(0, newCount)
+      return { ...state, tableCount: newCount, tableSeatCounts: newCounts, error: null }
+    }
 
-    case 'UPDATE_SEATS_PER_TABLE':
-      return { ...state, seatsPerTable: action.payload, error: null }
+    case 'UPDATE_TABLE_SEATS': {
+      const parts = action.payload
+        .split(',')
+        .map((s) => parseInt(s.trim()))
+        .filter((n) => !isNaN(n) && n > 0)
+      if (parts.length === 0) return state
+      const newCounts = parts.length === 1 ? Array(state.tableCount).fill(parts[0]) : parts
+      return {
+        ...state,
+        seatsPerTable: parts[0],
+        tableCount: newCounts.length,
+        tableSeatCounts: newCounts,
+        error: null,
+      }
+    }
 
     case 'ASSIGN': {
-      const validationError = validatePlan(state.guests, state.tableCount, state.seatsPerTable)
+      const validationError = validatePlan(state.guests, state.tableSeatCounts)
       if (validationError) {
         return { ...state, error: validationError }
       }
-      const { guests, tables } = assignSeatsProximity(
-        state.guests,
-        state.tableCount,
-        state.seatsPerTable,
-      )
+      const { guests, tables } = assignSeatsProximity(state.guests, state.tableSeatCounts)
       return {
         ...state,
         guests,
@@ -176,11 +195,7 @@ function reducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'REASSIGN': {
-      const { guests, tables } = assignSeatsProximity(
-        state.guests,
-        state.tableCount,
-        state.seatsPerTable,
-      )
+      const { guests, tables } = assignSeatsProximity(state.guests, state.tableSeatCounts)
       return { ...state, guests, tables, assigned: true, selectedGuestId: null, error: null }
     }
 
@@ -264,6 +279,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         rawGuestText: p.rawGuestText,
         tableCount: p.tableCount,
         seatsPerTable: p.seatsPerTable,
+        tableSeatCounts: p.tableSeatCounts,
         guests: p.guests,
         tables: p.tables,
         assigned: p.assigned,
@@ -297,12 +313,16 @@ function AppContent() {
       const fileState = await loadFromFile()
       const saved = fileState ?? load()
       if (saved) {
+        const tableSeatCounts = saved.config.tableSeatCounts?.length
+          ? saved.config.tableSeatCounts
+          : Array(saved.config.tableCount).fill(saved.config.seatsPerTable)
         dispatch({
           type: 'RESTORE',
           payload: {
             rawGuestText: saved.config.rawGuestText,
             tableCount: saved.config.tableCount,
             seatsPerTable: saved.config.seatsPerTable,
+            tableSeatCounts,
             guests: saved.guests,
             tables: saved.tables,
             assigned: saved.assigned,
@@ -322,6 +342,7 @@ function AppContent() {
         config: {
           tableCount: state.tableCount,
           seatsPerTable: state.seatsPerTable,
+          tableSeatCounts: state.tableSeatCounts,
           rawGuestText: state.rawGuestText,
         },
         guests: state.guests,
@@ -365,6 +386,65 @@ function AppContent() {
     if (state.selectedGuestId !== null) {
       dispatch({ type: 'MOVE_GUEST', payload: { guestId: state.selectedGuestId, toTableId: tableId, toSeatIndex: seatIndex } })
     }
+  }
+
+  function handleExport() {
+    const plan = {
+      version: 4,
+      config: {
+        tableCount: state.tableCount,
+        seatsPerTable: state.seatsPerTable,
+        tableSeatCounts: state.tableSeatCounts,
+        rawGuestText: state.rawGuestText,
+      },
+      guests: state.guests,
+      tables: state.tables,
+      assigned: state.assigned,
+      availableLabels: state.availableLabels,
+    }
+    const blob = new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `seating-plan-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string)
+        const saved = parsePlan(data)
+        if (!saved) {
+          dispatch({ type: 'UPDATE_GUEST_TEXT', payload: state.rawGuestText })
+          return
+        }
+        const tableSeatCounts = saved.config.tableSeatCounts?.length
+          ? saved.config.tableSeatCounts
+          : Array(saved.config.tableCount).fill(saved.config.seatsPerTable)
+        dispatch({
+          type: 'RESTORE',
+          payload: {
+            rawGuestText: saved.config.rawGuestText,
+            tableCount: saved.config.tableCount,
+            seatsPerTable: saved.config.seatsPerTable,
+            tableSeatCounts,
+            guests: saved.guests,
+            tables: saved.tables,
+            assigned: saved.assigned,
+            availableLabels: saved.availableLabels,
+          },
+        })
+      } catch {
+        // invalid JSON — silently ignore
+      }
+    }
+    reader.readAsText(file)
   }
 
   const coupleColorMap = useMemo(() => {
@@ -418,6 +498,10 @@ function AppContent() {
               </p>
             )}
             <div className={styles.stepNav}>
+              <label className={styles.importButton}>
+                {t.importJson}
+                <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+              </label>
               <button
                 type="button"
                 className={styles.navButton}
@@ -455,11 +539,9 @@ function AppContent() {
           <section className={styles.controls}>
             <ConfigPanel
               tableCount={state.tableCount}
-              seatsPerTable={state.seatsPerTable}
+              tableSeatCounts={state.tableSeatCounts}
               onTableCountChange={(n) => dispatch({ type: 'UPDATE_TABLE_COUNT', payload: n })}
-              onSeatsPerTableChange={(n) =>
-                dispatch({ type: 'UPDATE_SEATS_PER_TABLE', payload: n })
-              }
+              onTableSeatsChange={(text) => dispatch({ type: 'UPDATE_TABLE_SEATS', payload: text })}
               onAssign={() => dispatch({ type: 'ASSIGN' })}
               onBack={() => dispatch({ type: 'GO_BACK_TO_LABELS' })}
               guestCount={state.guests.length}
@@ -485,6 +567,9 @@ function AppContent() {
                 onClick={() => dispatch({ type: 'REASSIGN' })}
               >
                 {t.reassign}
+              </button>
+              <button type="button" className={styles.secondaryButton} onClick={handleExport}>
+                {t.exportJson}
               </button>
             </div>
             <section className={styles.chart} onClick={handleChartClick}>

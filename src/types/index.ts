@@ -17,6 +17,7 @@ export interface Table {
 export interface PlanConfig {
   tableCount: number
   seatsPerTable: number
+  tableSeatCounts?: number[]
   rawGuestText: string
 }
 

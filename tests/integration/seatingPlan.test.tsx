@@ -24,6 +24,7 @@ function assignSeats(guestList: string, tables: number, seatsPerTable: number) {
 
   const seatsInput = screen.getByLabelText(/seats per table/i)
   fireEvent.change(seatsInput, { target: { value: String(seatsPerTable) } })
+  fireEvent.blur(seatsInput)
 
   fireEvent.click(screen.getByRole('button', { name: /assign/i }))
 }
