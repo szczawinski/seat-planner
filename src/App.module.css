@@ -98,6 +98,26 @@
   margin-top: 8px;
 }
 
+.clearButton {
+  padding: 8px 20px;
+  background: transparent;
+  color: #8B6B4A;
+  border: 1px solid #D4B483;
+  border-radius: 3px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  margin-right: auto;
+}
+
+.clearButton:hover {
+  background: #FEF0EE;
+  border-color: #E8B4B0;
+  color: #7B1E2A;
+}
+
 .importButton {
   padding: 8px 20px;
   background: transparent;

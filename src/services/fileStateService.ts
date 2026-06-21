@@ -15,6 +15,16 @@ export async function saveToFile(plan: SeatingPlan): Promise<void> {
   }
 }
 
+export async function clearFile(): Promise<void> {
+  try {
+    await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    })
+  } catch { }
+}
+
 export async function loadFromFile(): Promise<SeatingPlan | null> {
   try {
     const res = await fetch(API)

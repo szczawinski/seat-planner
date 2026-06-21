@@ -6,8 +6,8 @@ import {
   assignSeatsProximity,
   assignCoupleIds,
 } from './services/seatingAssigner'
-import { save, load, parsePlan } from './services/storageService'
-import { saveToFile, loadFromFile } from './services/fileStateService'
+import { save, load, clear, parsePlan } from './services/storageService'
+import { saveToFile, loadFromFile, clearFile } from './services/fileStateService'
 import { LanguageProvider, useLang } from './i18n/LanguageContext'
 import { translateError } from './i18n/translations'
 import GuestInput from './components/GuestInput/GuestInput'
@@ -41,6 +41,7 @@ interface AppState {
 
 type AppAction =
   | { type: 'UPDATE_GUEST_TEXT'; payload: string }
+  | { type: 'CLEAR_STATE' }
   | { type: 'PARSE_AND_ADVANCE' }
   | { type: 'GO_BACK_TO_IMPORT' }
   | { type: 'TOGGLE_GUEST_LABEL'; payload: { guestId: string; label: string } }
@@ -88,6 +89,9 @@ function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'UPDATE_GUEST_TEXT':
       return { ...state, rawGuestText: action.payload, error: null }
+
+    case 'CLEAR_STATE':
+      return { ...initialState }
 
     case 'PARSE_AND_ADVANCE': {
       const parsed = parseGuests(state.rawGuestText)
@@ -388,6 +392,13 @@ function AppContent() {
     }
   }
 
+  function handleClear() {
+    if (!window.confirm(t.clearConfirm)) return
+    dispatch({ type: 'CLEAR_STATE' })
+    clear()
+    clearFile()
+  }
+
   function handleExport() {
     const plan = {
       version: 4,
@@ -498,6 +509,11 @@ function AppContent() {
               </p>
             )}
             <div className={styles.stepNav}>
+              {state.guests.length > 0 && (
+                <button type="button" className={styles.clearButton} onClick={handleClear}>
+                  {t.clearState}
+                </button>
+              )}
               <label className={styles.importButton}>
                 {t.importJson}
                 <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
