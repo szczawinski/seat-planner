@@ -35,6 +35,7 @@ export interface Translation {
   createCouple: string
   createCoupleHint: string
   labelSummaryHeading: string
+  showAssigned: string
   exportJson: string
   importJson: string
   clearState: string
@@ -93,6 +94,7 @@ const pl: Translation = {
   createCouple: 'Stwórz parę',
   createCoupleHint: 'Zaznacz dokładnie 2 osoby, aby je sparować.',
   labelSummaryHeading: 'Podsumowanie grup',
+  showAssigned: 'Pokaż przydzielone miejsca',
   exportJson: 'Eksportuj JSON',
   importJson: 'Importuj JSON',
   clearState: 'Wyczyść',
@@ -138,6 +140,7 @@ const en: Translation = {
   createCouple: 'Create couple',
   createCoupleHint: 'Select exactly 2 guests to pair them.',
   labelSummaryHeading: 'Group summary',
+  showAssigned: 'Show assigned seats',
   exportJson: 'Export JSON',
   importJson: 'Import JSON',
   clearState: 'Clear',
@@ -183,6 +186,7 @@ const it: Translation = {
   createCouple: 'Crea coppia',
   createCoupleHint: 'Seleziona esattamente 2 ospiti per accoppiarli.',
   labelSummaryHeading: 'Riepilogo gruppi',
+  showAssigned: 'Mostra posti assegnati',
   exportJson: 'Esporta JSON',
   importJson: 'Importa JSON',
   clearState: 'Cancella',

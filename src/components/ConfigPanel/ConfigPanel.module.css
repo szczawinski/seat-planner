@@ -91,6 +91,25 @@
   box-shadow: 0 1px 3px rgba(123, 30, 42, 0.2);
 }
 
+.showAssignedButton {
+  padding: 10px 22px;
+  background: transparent;
+  color: #4A5E37;
+  border: 1px solid #7A9A5A;
+  border-radius: 3px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.showAssignedButton:hover {
+  background: #EDF3E8;
+  border-color: #4A5E37;
+}
+
 .error {
   color: #7B1E2A;
   font-family: 'Cormorant Garamond', Georgia, serif;

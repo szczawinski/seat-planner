@@ -8,8 +8,10 @@ interface ConfigPanelProps {
   onTableCountChange: (n: number) => void
   onTableSeatsChange: (text: string) => void
   onAssign: () => void
+  onShowAssigned?: () => void
   onBack: () => void
   guestCount: number
+  hasAssigned: boolean
   error: string | null
 }
 
@@ -25,8 +27,10 @@ export default function ConfigPanel({
   onTableCountChange,
   onTableSeatsChange,
   onAssign,
+  onShowAssigned,
   onBack,
   guestCount,
+  hasAssigned,
   error,
 }: ConfigPanelProps) {
   const { t } = useLang()
@@ -76,6 +80,11 @@ export default function ConfigPanel({
         <button className={styles.button} onClick={onAssign} aria-label={t.assignAriaLabel}>
           {t.assignButton}
         </button>
+        {hasAssigned && onShowAssigned && (
+          <button type="button" className={styles.showAssignedButton} onClick={onShowAssigned}>
+            {t.showAssigned}
+          </button>
+        )}
       </div>
       {error && (
         <p className={styles.error} role="status" aria-live="polite">

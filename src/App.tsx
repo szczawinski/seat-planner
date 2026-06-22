@@ -51,6 +51,7 @@ type AppAction =
   | { type: 'UPDATE_TABLE_COUNT'; payload: number }
   | { type: 'UPDATE_TABLE_SEATS'; payload: string }
   | { type: 'ASSIGN' }
+  | { type: 'SHOW_ASSIGNED' }
   | { type: 'REASSIGN' }
   | { type: 'RENAME_GUEST'; payload: { guestId: string; newName: string } }
   | { type: 'PAIR_GUESTS'; payload: { idA: string; idB: string } }
@@ -150,10 +151,13 @@ function reducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'GO_TO_CONFIGURE':
-      return { ...state, step: 3, assigned: false, tables: [], error: null }
+      return { ...state, step: 3, error: null }
 
     case 'GO_BACK_TO_LABELS':
-      return { ...state, step: 2, assigned: false, tables: [], selectedGuestId: null, error: null }
+      return { ...state, step: 2, selectedGuestId: null, error: null }
+
+    case 'SHOW_ASSIGNED':
+      return { ...state, step: 4, error: null }
 
     case 'UPDATE_TABLE_COUNT': {
       const newCount = Math.max(1, action.payload)
@@ -559,8 +563,10 @@ function AppContent() {
               onTableCountChange={(n) => dispatch({ type: 'UPDATE_TABLE_COUNT', payload: n })}
               onTableSeatsChange={(text) => dispatch({ type: 'UPDATE_TABLE_SEATS', payload: text })}
               onAssign={() => dispatch({ type: 'ASSIGN' })}
+              onShowAssigned={() => dispatch({ type: 'SHOW_ASSIGNED' })}
               onBack={() => dispatch({ type: 'GO_BACK_TO_LABELS' })}
               guestCount={state.guests.length}
+              hasAssigned={state.assigned}
               error={translatedError}
             />
           </section>
