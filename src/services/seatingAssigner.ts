@@ -153,6 +153,32 @@ export function greedyClustering(guests: Guest[], tableSeatCounts: number[]): Gu
     clusters.push(cluster)
   }
 
+  // Second pass: place any units that couldn't fit during the greedy phase.
+  // This can happen when remaining slots are smaller than a couple unit.
+  // validatePlan guarantees total capacity >= guests, so everyone must fit.
+  for (const unit of remainingUnits) {
+    let placed = false
+    // First try to keep the unit together
+    for (let t = 0; t < clusters.length; t++) {
+      if (clusters[t].length + unit.length <= tableSeatCounts[t]) {
+        clusters[t].push(...unit)
+        placed = true
+        break
+      }
+    }
+    if (!placed) {
+      // Last resort: place individually (couple will be split — better than invisible)
+      for (const g of unit) {
+        for (let t = 0; t < clusters.length; t++) {
+          if (clusters[t].length < tableSeatCounts[t]) {
+            clusters[t].push(g)
+            break
+          }
+        }
+      }
+    }
+  }
+
   return clusters
 }
 
