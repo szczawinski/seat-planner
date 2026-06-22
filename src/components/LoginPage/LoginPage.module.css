@@ -1,0 +1,88 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #FDF8EE 0%, #FAF3E0 100%);
+  padding: 24px;
+}
+
+.card {
+  background: #FFFDF7;
+  border: 1px solid #D4B483;
+  border-top: 3px solid #7B1E2A;
+  border-radius: 4px;
+  padding: 48px 40px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(44, 18, 8, 0.1), 0 1px 4px rgba(44, 18, 8, 0.06);
+}
+
+.ornament {
+  font-size: 1.2rem;
+  color: #B8952A;
+  letter-spacing: 8px;
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #7B1E2A;
+  letter-spacing: 0.03em;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 1rem;
+  color: #B8952A;
+  letter-spacing: 0.1em;
+}
+
+.divider {
+  width: 160px;
+  margin: 0 auto 28px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #B8952A 30%, #7B1E2A 50%, #B8952A 70%, transparent);
+}
+
+.prompt {
+  margin: 0 0 24px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.05rem;
+  color: #8B6B4A;
+  font-style: italic;
+}
+
+.buttonWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.error {
+  margin: 12px 0 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.95rem;
+  color: #7B1E2A;
+  font-style: italic;
+  padding: 10px 14px;
+  background: #FEF0EE;
+  border: 1px solid #E8B4B0;
+  border-left: 3px solid #7B1E2A;
+  border-radius: 3px;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 32px 20px;
+  }
+  .title {
+    font-size: 1.4rem;
+  }
+}

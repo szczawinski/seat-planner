@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useMemo } from 'react'
+import { useReducer, useEffect, useMemo, useState } from 'react'
 import type { Guest, Table } from './types'
 import {
   parseGuests,
@@ -16,6 +16,8 @@ import SeatingChart from './components/SeatingChart/SeatingChart'
 import StepIndicator from './components/StepIndicator/StepIndicator'
 import LabelStep from './components/LabelStep/LabelStep'
 import LanguagePicker from './components/LanguagePicker/LanguagePicker'
+import AdminPanel from './components/AdminPanel/AdminPanel'
+import type { AuthUser } from './contexts/AuthContext'
 import styles from './App.module.css'
 
 const DEFAULT_LABELS = ['Magda', 'Piotr', 'Family', 'Friend', 'High school', 'Studies', 'Neighbor', 'Senior']
@@ -303,17 +305,23 @@ function reducer(state: AppState, action: AppAction): AppState {
   }
 }
 
-export default function App() {
+interface AppProps {
+  authUser?: AuthUser | null
+  onLogout?: () => Promise<void>
+}
+
+export default function App({ authUser, onLogout }: AppProps = {}) {
   return (
     <LanguageProvider>
-      <AppContent />
+      <AppContent authUser={authUser} onLogout={onLogout} />
     </LanguageProvider>
   )
 }
 
-function AppContent() {
+function AppContent({ authUser, onLogout }: AppProps) {
   const { t } = useLang()
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [showAdmin, setShowAdmin] = useState(false)
 
   // On startup: prefer file-based state (survives browser clears), fall back to localStorage
   useEffect(() => {
@@ -481,10 +489,31 @@ function AppContent() {
 
   return (
     <div className={styles.app}>
+      {showAdmin && authUser?.isAdmin && (
+        <AdminPanel onClose={() => setShowAdmin(false)} />
+      )}
       <header className={styles.header}>
         <div className={styles.languagePickerWrapper}>
           <LanguagePicker />
         </div>
+        {authUser && (
+          <div className={styles.userBar}>
+            {authUser.picture && (
+              <img src={authUser.picture} alt="" className={styles.userAvatar} referrerPolicy="no-referrer" />
+            )}
+            <span className={styles.userName}>{authUser.name}</span>
+            {authUser.isAdmin && (
+              <button type="button" className={styles.adminButton} onClick={() => setShowAdmin(true)}>
+                Admin
+              </button>
+            )}
+            {onLogout && (
+              <button type="button" className={styles.logoutButton} onClick={onLogout}>
+                Wyloguj
+              </button>
+            )}
+          </div>
+        )}
         <div className={styles.ornamentRow}>
           <div className={styles.ornamentLine} />
           <span className={styles.ornamentSymbol}>❦ ✦ ❧</span>

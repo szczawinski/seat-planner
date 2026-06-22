@@ -1,0 +1,179 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 18, 8, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.panel {
+  background: #FFFDF7;
+  border: 1px solid #D4B483;
+  border-top: 3px solid #7B1E2A;
+  border-radius: 4px;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(44, 18, 8, 0.18);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.heading {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #7B1E2A;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  color: #8B6B4A;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.closeButton:hover {
+  background: #F5EDD8;
+}
+
+.adminEmail {
+  margin: 0 0 20px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.9rem;
+  color: #A08060;
+  font-style: italic;
+}
+
+.addRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid #D4B483;
+  border-radius: 3px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.95rem;
+  background: #FFFDF7;
+  color: #2C1208;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #B8952A;
+  box-shadow: 0 0 0 3px rgba(184, 149, 42, 0.12);
+}
+
+.addButton {
+  padding: 9px 20px;
+  background: #7B1E2A;
+  color: #FFFDF7;
+  border: 1px solid #5A1520;
+  border-radius: 3px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.addButton:hover {
+  background: #5A1520;
+}
+
+.error {
+  margin: 0 0 12px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.9rem;
+  color: #7B1E2A;
+  font-style: italic;
+  padding: 8px 12px;
+  background: #FEF0EE;
+  border-left: 3px solid #7B1E2A;
+  border-radius: 3px;
+}
+
+.listHeading {
+  margin: 0 0 10px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7B1E2A;
+  letter-spacing: 0.04em;
+  border-top: 1px solid rgba(212, 180, 131, 0.4);
+  padding-top: 14px;
+}
+
+.userList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.userRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(212, 180, 131, 0.3);
+}
+
+.userRow:last-child {
+  border-bottom: none;
+}
+
+.userEmail {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.95rem;
+  color: #2C1208;
+}
+
+.removeButton {
+  background: transparent;
+  border: 1px solid #E8B4B0;
+  color: #7B1E2A;
+  border-radius: 3px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+
+.removeButton:hover {
+  background: #FEF0EE;
+}
+
+.loading,
+.empty {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.9rem;
+  color: #A08060;
+  font-style: italic;
+  margin: 8px 0 0;
+}

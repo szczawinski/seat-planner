@@ -23,6 +23,77 @@
   right: 0;
 }
 
+.userBar {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.userAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #D4B483;
+  flex-shrink: 0;
+}
+
+.userName {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.9rem;
+  color: #8B6B4A;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adminButton {
+  padding: 4px 12px;
+  background: #7B1E2A;
+  color: #FFFDF7;
+  border: none;
+  border-radius: 3px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.15s;
+}
+
+.adminButton:hover {
+  background: #5A1520;
+}
+
+.logoutButton {
+  padding: 4px 12px;
+  background: transparent;
+  color: #8B6B4A;
+  border: 1px solid #D4B483;
+  border-radius: 3px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.logoutButton:hover {
+  background: #F5EDD8;
+  border-color: #B8952A;
+}
+
+@media (max-width: 600px) {
+  .userBar {
+    top: 20px;
+  }
+  .userName {
+    display: none;
+  }
+}
+
 .ornamentRow {
   display: flex;
   align-items: center;
