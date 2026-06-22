@@ -2,8 +2,8 @@
 
 const express = require('express')
 const path = require('path')
+const crypto = require('crypto')
 const { Storage } = require('@google-cloud/storage')
-const cookieSession = require('cookie-session')
 const { OAuth2Client } = require('google-auth-library')
 
 const PORT = parseInt(process.env.PORT || '8080', 10)
@@ -13,20 +13,71 @@ const USERS_OBJECT = 'users.json'
 const ADMIN_EMAIL = 'szczawinskipiotr@gmail.com'
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || ''
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-insecure-secret'
+const COOKIE_NAME = 'sp_tok'
+const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 // seconds
 
 const app = express()
-
-app.use(cookieSession({
-  name: 'sp_session',
-  keys: [SESSION_SECRET],
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  secure: !!GOOGLE_CLIENT_ID,
-  httpOnly: true,
-  sameSite: 'lax',
-}))
-
 app.use(express.json({ limit: '2mb' }))
 app.use(express.static(path.join(__dirname, 'dist')))
+
+// --- Token helpers (HMAC-signed, no extra packages) ---
+
+function signToken(payload) {
+  const data = Buffer.from(JSON.stringify(payload)).toString('base64url')
+  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('base64url')
+  return `${data}.${sig}`
+}
+
+function verifyToken(token) {
+  if (!token || typeof token !== 'string') return null
+  const dot = token.lastIndexOf('.')
+  if (dot < 0) return null
+  const data = token.slice(0, dot)
+  const sig = token.slice(dot + 1)
+  const expected = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('base64url')
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(sig, 'base64url'), Buffer.from(expected, 'base64url'))) return null
+  } catch {
+    return null
+  }
+  try {
+    return JSON.parse(Buffer.from(data, 'base64url').toString('utf8'))
+  } catch {
+    return null
+  }
+}
+
+function parseCookies(req) {
+  const result = {}
+  const header = req.headers.cookie || ''
+  for (const pair of header.split(';')) {
+    const idx = pair.indexOf('=')
+    if (idx < 0) continue
+    result[pair.slice(0, idx).trim()] = decodeURIComponent(pair.slice(idx + 1).trim())
+  }
+  return result
+}
+
+function setSessionCookie(res, user) {
+  const token = signToken(user)
+  const secure = !!GOOGLE_CLIENT_ID
+  res.setHeader('Set-Cookie',
+    `${COOKIE_NAME}=${encodeURIComponent(token)}; Max-Age=${COOKIE_MAX_AGE}; Path=/; HttpOnly; SameSite=Lax${secure ? '; Secure' : ''}`
+  )
+}
+
+function clearSessionCookie(res) {
+  res.setHeader('Set-Cookie',
+    `${COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax`
+  )
+}
+
+function getSessionUser(req) {
+  const cookies = parseCookies(req)
+  const raw = cookies[COOKIE_NAME]
+  if (!raw) return null
+  return verifyToken(decodeURIComponent(raw))
+}
 
 // --- GCS helpers ---
 
@@ -56,13 +107,17 @@ async function saveAllowedUsers(users) {
 
 function requireAuth(req, res, next) {
   if (!GOOGLE_CLIENT_ID) return next()
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' })
+  const user = getSessionUser(req)
+  if (!user) return res.status(401).json({ error: 'Unauthorized' })
+  req.sessionUser = user
   next()
 }
 
 function requireAdmin(req, res, next) {
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' })
-  if (req.session.user.email !== ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' })
+  const user = getSessionUser(req)
+  if (!user) return res.status(401).json({ error: 'Unauthorized' })
+  if (user.email !== ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' })
+  req.sessionUser = user
   next()
 }
 
@@ -75,7 +130,8 @@ app.get('/api/config', (_req, res) => {
 // --- Auth ---
 
 app.get('/api/auth/me', (req, res) => {
-  res.json(req.session?.user ?? null)
+  const user = getSessionUser(req)
+  res.json(user ?? null)
 })
 
 app.post('/api/auth/verify', async (req, res) => {
@@ -95,7 +151,7 @@ app.post('/api/auth/verify', async (req, res) => {
     }
 
     const user = { email, name: payload.name, picture: payload.picture, isAdmin }
-    req.session.user = user
+    setSessionCookie(res, user)
     res.json(user)
   } catch (err) {
     console.error('Auth verify error', err)
@@ -104,34 +160,49 @@ app.post('/api/auth/verify', async (req, res) => {
 })
 
 app.post('/api/auth/logout', (req, res) => {
-  req.session = null
+  clearSessionCookie(res)
   res.json({ ok: true })
 })
 
 // --- Admin ---
 
 app.get('/api/admin/users', requireAdmin, async (_req, res) => {
-  res.json(await getAllowedUsers())
+  try {
+    res.json(await getAllowedUsers())
+  } catch (err) {
+    console.error('Admin get users error', err)
+    res.status(500).json({ error: 'Internal error' })
+  }
 })
 
 app.post('/api/admin/users', requireAdmin, async (req, res) => {
   const { email } = req.body || {}
   if (!email || typeof email !== 'string') return res.status(400).json({ error: 'Email required' })
-  const users = await getAllowedUsers()
-  const normalized = email.toLowerCase().trim()
-  if (!users.includes(normalized)) {
-    users.push(normalized)
-    await saveAllowedUsers(users)
+  try {
+    const users = await getAllowedUsers()
+    const normalized = email.toLowerCase().trim()
+    if (!users.includes(normalized)) {
+      users.push(normalized)
+      await saveAllowedUsers(users)
+    }
+    res.json(users)
+  } catch (err) {
+    console.error('Admin add user error', err)
+    res.status(500).json({ error: 'Internal error' })
   }
-  res.json(users)
 })
 
 app.delete('/api/admin/users/:email', requireAdmin, async (req, res) => {
-  const email = decodeURIComponent(req.params.email)
-  const users = await getAllowedUsers()
-  const updated = users.filter((e) => e !== email)
-  await saveAllowedUsers(updated)
-  res.json(updated)
+  try {
+    const email = decodeURIComponent(req.params.email)
+    const users = await getAllowedUsers()
+    const updated = users.filter((e) => e !== email)
+    await saveAllowedUsers(updated)
+    res.json(updated)
+  } catch (err) {
+    console.error('Admin remove user error', err)
+    res.status(500).json({ error: 'Internal error' })
+  }
 })
 
 // --- State (protected) ---
