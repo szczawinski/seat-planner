@@ -15,8 +15,11 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
 
   useEffect(() => {
     fetch('/api/admin/users')
-      .then((r) => r.json())
-      .then(setUsers)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then((data) => setUsers(Array.isArray(data) ? data : []))
       .catch(() => setError('Nie można załadować listy użytkowników'))
       .finally(() => setLoading(false))
   }, [])
