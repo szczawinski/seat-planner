@@ -56,6 +56,23 @@
   transition: background 0.2s;
 }
 
+@media (max-width: 600px) {
+  .connector {
+    width: 28px;
+  }
+  .node {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+  .stepLabel {
+    font-size: 0.6rem;
+  }
+  .container {
+    padding-bottom: 20px;
+  }
+}
+
 .connectorDone {
   background: #B8952A;
 }

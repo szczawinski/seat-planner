@@ -37,3 +37,9 @@
   border-color: #B8952A;
   box-shadow: 0 0 0 3px rgba(184, 149, 42, 0.12);
 }
+
+@media (max-width: 600px) {
+  .textarea {
+    font-size: 0.95rem;
+  }
+}

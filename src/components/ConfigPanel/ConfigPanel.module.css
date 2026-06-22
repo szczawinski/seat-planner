@@ -135,6 +135,31 @@
   margin-top: 12px;
 }
 
+@media (max-width: 600px) {
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .field {
+    width: 100%;
+  }
+  .input {
+    width: 100%;
+  }
+  .seatsInput {
+    width: 100%;
+  }
+  .button {
+    width: 100%;
+    text-align: center;
+  }
+  .showAssignedButton {
+    width: 100%;
+    text-align: center;
+  }
+}
+
 .backButton {
   padding: 8px 18px;
   background: transparent;
