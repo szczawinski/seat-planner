@@ -594,6 +594,7 @@ function AppContent() {
                 guests={state.guests}
                 selectedGuestId={state.selectedGuestId}
                 coupleColorMap={coupleColorMap}
+                tableCount={state.tableCount}
                 onGuestClick={handleGuestClick}
                 onEmptySeatClick={handleEmptySeatClick}
               />

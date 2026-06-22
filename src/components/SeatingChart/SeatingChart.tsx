@@ -10,10 +10,12 @@ interface SeatingChartProps {
   coupleColorMap: Map<string, string>
   onGuestClick: (guestId: string) => void
   onEmptySeatClick: (tableId: string, seatIndex: number) => void
+  tableCount: number
 }
 
-export default function SeatingChart({ tables, guests, selectedGuestId, coupleColorMap, onGuestClick, onEmptySeatClick }: SeatingChartProps) {
+export default function SeatingChart({ tables, guests, selectedGuestId, coupleColorMap, onGuestClick, onEmptySeatClick, tableCount }: SeatingChartProps) {
   const { t } = useLang()
+  const compact = tableCount >= 4
 
   if (tables.length === 0) {
     return (
@@ -24,8 +26,12 @@ export default function SeatingChart({ tables, guests, selectedGuestId, coupleCo
     )
   }
 
+  const gridStyle = compact
+    ? { gridTemplateColumns: `repeat(${tableCount}, 1fr)`, gap: '12px' }
+    : undefined
+
   return (
-    <div className={styles.grid}>
+    <div className={styles.grid} style={gridStyle}>
       {tables.map((table) => (
         <TableCard
           key={table.id}
@@ -33,6 +39,7 @@ export default function SeatingChart({ tables, guests, selectedGuestId, coupleCo
           guests={guests}
           selectedGuestId={selectedGuestId}
           coupleColorMap={coupleColorMap}
+          compact={compact}
           onGuestClick={onGuestClick}
           onEmptySeatClick={onEmptySeatClick}
         />
