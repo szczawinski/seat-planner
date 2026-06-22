@@ -7,7 +7,6 @@ interface TableCardProps {
   guests: Guest[]
   selectedGuestId: string | null
   coupleColorMap: Map<string, string>
-  compact?: boolean
   onGuestClick: (guestId: string) => void
   onEmptySeatClick: (tableId: string, seatIndex: number) => void
 }
@@ -72,7 +71,7 @@ function SeatItem({
   )
 }
 
-export default function TableCard({ table, guests, selectedGuestId, coupleColorMap, compact, onGuestClick, onEmptySeatClick }: TableCardProps) {
+export default function TableCard({ table, guests, selectedGuestId, coupleColorMap, onGuestClick, onEmptySeatClick }: TableCardProps) {
   const { t } = useLang()
   const guestMap = new Map(guests.map((g) => [g.id, g]))
   const leftCount = Math.ceil(table.capacity / 2)
@@ -80,7 +79,7 @@ export default function TableCard({ table, guests, selectedGuestId, coupleColorM
   const rightSeats = table.seats.slice(leftCount)
 
   return (
-    <div className={`${styles.card}${compact ? ` ${styles.compact}` : ''}`} data-testid="table-card" onClick={(e) => e.stopPropagation()}>
+    <div className={styles.card} data-testid="table-card" onClick={(e) => e.stopPropagation()}>
       <div className={styles.tableLayout}>
         <div className={styles.side}>
           <span className={styles.sideLabel}>{t.leftSide}</span>

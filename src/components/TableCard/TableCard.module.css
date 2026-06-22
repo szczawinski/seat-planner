@@ -7,18 +7,10 @@
   box-shadow: 0 2px 8px rgba(44, 18, 8, 0.1), 0 1px 2px rgba(44, 18, 8, 0.06);
 }
 
-.card.compact {
-  padding: 12px 10px;
-}
-
 .tableLayout {
   display: flex;
   align-items: stretch;
   gap: 12px;
-}
-
-.compact .tableLayout {
-  gap: 8px;
 }
 
 .side {
@@ -40,11 +32,6 @@
   display: block;
 }
 
-.compact .sideLabel {
-  font-size: 0.62rem;
-  margin-bottom: 2px;
-}
-
 .tableTop {
   flex: 0 0 auto;
   width: 100px;
@@ -58,11 +45,6 @@
   padding: 12px 6px;
 }
 
-.compact .tableTop {
-  width: 64px;
-  padding: 8px 4px;
-}
-
 .tableName {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 0.85rem;
@@ -74,10 +56,6 @@
   writing-mode: vertical-rl;
   text-orientation: mixed;
   transform: rotate(180deg);
-}
-
-.compact .tableName {
-  font-size: 0.75rem;
 }
 
 .guestItem {
@@ -95,11 +73,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.compact .guestItem {
-  padding: 3px 7px;
-  font-size: 0.82rem;
 }
 
 .guestItem:hover {
@@ -120,12 +93,6 @@
   color: #FFFDF7;
   font-weight: 600;
   box-shadow: 0 2px 6px rgba(123, 30, 42, 0.3);
-}
-
-.compact .emptySeat,
-.compact .emptySeatTarget {
-  padding: 3px 7px;
-  font-size: 0.78rem;
 }
 
 .emptySeat {
