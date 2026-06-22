@@ -125,6 +125,50 @@
   background: #9A7B20;
 }
 
+.labelSummary {
+  padding-top: 16px;
+  border-top: 1px solid rgba(212, 180, 131, 0.4);
+  margin-bottom: 12px;
+}
+
+.labelSummaryHeading {
+  margin: 0 0 10px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #7B1E2A;
+  letter-spacing: 0.04em;
+}
+
+.labelSummaryList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.labelSummaryItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.9rem;
+}
+
+.labelSummaryCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
 .nav {
   display: flex;
   justify-content: space-between;

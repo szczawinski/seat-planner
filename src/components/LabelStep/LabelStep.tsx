@@ -74,6 +74,11 @@ export default function LabelStep({
   const pairReady = checkedForPair.length === 2
   const pairNames = checkedForPair.map((id) => guests.find((g) => g.id === id)?.name ?? id)
 
+  const labelCounts = availableLabels.map((label) => ({
+    label,
+    count: guests.filter((g) => g.labels.includes(label)).length,
+  }))
+
   return (
     <div className={styles.container}>
       <div className={styles.card}>
@@ -122,6 +127,30 @@ export default function LabelStep({
           <button type="button" className={styles.addLabelButton} onClick={handleAddLabel}>
             {t.addLabel}
           </button>
+        </div>
+
+        <div className={styles.labelSummary}>
+          <p className={styles.labelSummaryHeading}>{t.labelSummaryHeading}</p>
+          <div className={styles.labelSummaryList}>
+            {labelCounts.map(({ label, count }, i) => {
+              const color = PALETTE[i % PALETTE.length]
+              return (
+                <span
+                  key={label}
+                  className={styles.labelSummaryItem}
+                  style={{ background: color.bg + '18', border: `1px solid ${color.bg}40` }}
+                >
+                  <span style={{ color: color.bg, fontWeight: 600 }}>{label}</span>
+                  <span
+                    className={styles.labelSummaryCount}
+                    style={{ background: color.bg, color: color.text }}
+                  >
+                    {count}
+                  </span>
+                </span>
+              )
+            })}
+          </div>
         </div>
       </div>
 

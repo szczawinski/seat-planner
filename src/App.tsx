@@ -18,7 +18,7 @@ import LabelStep from './components/LabelStep/LabelStep'
 import LanguagePicker from './components/LanguagePicker/LanguagePicker'
 import styles from './App.module.css'
 
-const DEFAULT_LABELS = ['Magda', 'Piotr', 'Family', 'Friend', 'High school', 'Studies']
+const DEFAULT_LABELS = ['Magda', 'Piotr', 'Family', 'Friend', 'High school', 'Studies', 'Neighbor', 'Senior']
 
 const COUPLE_PALETTE = [
   '#F4A0AA', '#A0BBF4', '#A0F0B0', '#F4E0A0',
