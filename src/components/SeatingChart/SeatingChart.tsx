@@ -10,9 +10,11 @@ interface SeatingChartProps {
   coupleColorMap: Map<string, string>
   onGuestClick: (guestId: string) => void
   onEmptySeatClick: (tableId: string, seatIndex: number) => void
+  onDragSwap: (draggedId: string, targetId: string) => void
+  onDragMove: (draggedId: string, toTableId: string, toSeatIndex: number) => void
 }
 
-export default function SeatingChart({ tables, guests, selectedGuestId, coupleColorMap, onGuestClick, onEmptySeatClick }: SeatingChartProps) {
+export default function SeatingChart({ tables, guests, selectedGuestId, coupleColorMap, onGuestClick, onEmptySeatClick, onDragSwap, onDragMove }: SeatingChartProps) {
   const { t } = useLang()
 
   if (tables.length === 0) {
@@ -35,6 +37,8 @@ export default function SeatingChart({ tables, guests, selectedGuestId, coupleCo
           coupleColorMap={coupleColorMap}
           onGuestClick={onGuestClick}
           onEmptySeatClick={onEmptySeatClick}
+          onDragSwap={onDragSwap}
+          onDragMove={onDragMove}
         />
       ))}
     </div>

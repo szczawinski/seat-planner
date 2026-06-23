@@ -164,3 +164,22 @@
   background: rgba(184, 149, 42, 0.12);
   outline: none;
 }
+
+.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.dragOverGuest {
+  background: #F0DEB8 !important;
+  border-color: #7B1E2A !important;
+  border-style: dashed !important;
+  transform: scale(1.03);
+  box-shadow: 0 2px 8px rgba(123, 30, 42, 0.25);
+}
+
+.dragOverEmpty {
+  background: rgba(184, 149, 42, 0.18) !important;
+  border-color: #B8952A !important;
+  border-style: solid !important;
+}

@@ -404,6 +404,14 @@ function AppContent({ authUser, onLogout }: AppProps) {
     }
   }
 
+  function handleDragSwap(draggedId: string, targetId: string) {
+    dispatch({ type: 'SWAP_GUESTS', payload: { firstId: draggedId, secondId: targetId } })
+  }
+
+  function handleDragMove(draggedId: string, toTableId: string, toSeatIndex: number) {
+    dispatch({ type: 'MOVE_GUEST', payload: { guestId: draggedId, toTableId, toSeatIndex } })
+  }
+
   function handleClear() {
     if (!window.confirm(t.clearConfirm)) return
     dispatch({ type: 'CLEAR_STATE' })
@@ -631,6 +639,8 @@ function AppContent({ authUser, onLogout }: AppProps) {
                 coupleColorMap={coupleColorMap}
                 onGuestClick={handleGuestClick}
                 onEmptySeatClick={handleEmptySeatClick}
+                onDragSwap={handleDragSwap}
+                onDragMove={handleDragMove}
               />
             </section>
           </>
