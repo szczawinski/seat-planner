@@ -77,7 +77,14 @@ export default function ConfigPanel({
             onBlur={() => onTableSeatsChange(seatsText)}
           />
         </div>
-        <button className={styles.button} onClick={onAssign} aria-label={t.assignAriaLabel}>
+        <button
+          className={styles.button}
+          onClick={() => {
+            if (hasAssigned && !window.confirm(t.assignConfirm)) return
+            onAssign()
+          }}
+          aria-label={t.assignAriaLabel}
+        >
           {t.assignButton}
         </button>
         {hasAssigned && onShowAssigned && (

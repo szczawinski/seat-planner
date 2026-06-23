@@ -19,6 +19,7 @@ export interface Translation {
   seatsPerTableLabel: string
   assignButton: string
   assignAriaLabel: string
+  assignConfirm: string
   editGroups: string
   reassign: string
   leftSide: string
@@ -76,6 +77,7 @@ const pl: Translation = {
   seatsPerTableLabel: 'Miejsc na stół',
   assignButton: 'Przydziel Miejsca',
   assignAriaLabel: 'Przydziel gości do miejsc',
+  assignConfirm: 'Miejsca są już przydzielone. Czy na pewno chcesz przydzielić na nowo? Obecny przydział zostanie usunięty.',
   editGroups: '← Edytuj grupy',
   reassign: 'Przydziel ponownie',
   leftSide: '◄ Lewa',
@@ -122,6 +124,7 @@ const en: Translation = {
   seatsPerTableLabel: 'Seats per table',
   assignButton: 'Assign Seats',
   assignAriaLabel: 'Assign guests to seats',
+  assignConfirm: 'Seats have already been assigned. Are you sure you want to reassign? The current assignment will be removed.',
   editGroups: '← Edit Groups',
   reassign: 'Re-assign',
   leftSide: '◄ Left',
@@ -168,6 +171,7 @@ const it: Translation = {
   seatsPerTableLabel: 'Posti per tavolo',
   assignButton: 'Assegna i Posti',
   assignAriaLabel: 'Assegna gli ospiti ai posti',
+  assignConfirm: 'I posti sono già stati assegnati. Sei sicuro di voler riassegnare? L\'assegnazione attuale verrà rimossa.',
   editGroups: '← Modifica gruppi',
   reassign: 'Riassegna',
   leftSide: '◄ Sinistra',
