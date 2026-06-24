@@ -60,6 +60,7 @@ type AppAction =
   | { type: 'SELECT_GUEST'; payload: string | null }
   | { type: 'MOVE_GUEST'; payload: { guestId: string; toTableId: string; toSeatIndex: number } }
   | { type: 'SWAP_GUESTS'; payload: { firstId: string; secondId: string } }
+  | { type: 'SHIFT_GUEST'; payload: { draggedId: string; targetId: string } }
   | {
       type: 'RESTORE'
       payload: {
@@ -256,6 +257,29 @@ function reducer(state: AppState, action: AppAction): AppState {
       return { ...state, guests: newGuests, tables: newTables, selectedGuestId: null }
     }
 
+    case 'SHIFT_GUEST': {
+      const { draggedId, targetId } = action.payload
+      const tableIdx = state.tables.findIndex(
+        (t) => t.seats.includes(draggedId) && t.seats.includes(targetId)
+      )
+      if (tableIdx === -1) return state
+      const tbl = state.tables[tableIdx]
+      const fromIdx = tbl.seats.indexOf(draggedId)
+      const toIdx = tbl.seats.indexOf(targetId)
+      const newSeats = [...tbl.seats]
+      newSeats.splice(fromIdx, 1)
+      newSeats.splice(toIdx, 0, draggedId)
+      const newTables = state.tables.map((t, i) =>
+        i === tableIdx ? { ...t, seats: newSeats } : t
+      )
+      const newGuests = state.guests.map((g) => {
+        if (g.tableId !== tbl.id) return g
+        const si = newSeats.indexOf(g.id)
+        return si === -1 ? g : { ...g, seatIndex: si }
+      })
+      return { ...state, tables: newTables, guests: newGuests, selectedGuestId: null }
+    }
+
     case 'SWAP_GUESTS': {
       const { firstId, secondId } = action.payload
       const first = state.guests.find((g) => g.id === firstId)
@@ -405,7 +429,14 @@ function AppContent({ authUser, onLogout }: AppProps) {
   }
 
   function handleDragSwap(draggedId: string, targetId: string) {
-    dispatch({ type: 'SWAP_GUESTS', payload: { firstId: draggedId, secondId: targetId } })
+    const sameTable = state.tables.some(
+      (t) => t.seats.includes(draggedId) && t.seats.includes(targetId)
+    )
+    if (sameTable) {
+      dispatch({ type: 'SHIFT_GUEST', payload: { draggedId, targetId } })
+    } else {
+      dispatch({ type: 'SWAP_GUESTS', payload: { firstId: draggedId, secondId: targetId } })
+    }
   }
 
   function handleDragMove(draggedId: string, toTableId: string, toSeatIndex: number) {

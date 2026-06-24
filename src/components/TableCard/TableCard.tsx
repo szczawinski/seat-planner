@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import type { Guest, Table } from '../../types'
 import { useLang } from '../../i18n/LanguageContext'
 import styles from './TableCard.module.css'
@@ -23,6 +23,7 @@ function SeatItem({
   isClickDropTarget,
   isDraggingOver,
   isDragging,
+  nodeRef,
   onGuestClick,
   onEmptySeatClick,
   onDragStart,
@@ -39,6 +40,7 @@ function SeatItem({
   isClickDropTarget: boolean
   isDraggingOver: boolean
   isDragging: boolean
+  nodeRef?: (el: HTMLDivElement | null) => void
   onGuestClick: (id: string) => void
   onEmptySeatClick: () => void
   onDragStart: (e: React.DragEvent) => void
@@ -51,7 +53,7 @@ function SeatItem({
     const emptyClass = [
       isClickDropTarget ? styles.emptySeatTarget : styles.emptySeat,
       isDraggingOver ? styles.dragOverEmpty : '',
-    ].join(' ')
+    ].filter(Boolean).join(' ')
 
     return (
       <div
@@ -79,6 +81,7 @@ function SeatItem({
 
   return (
     <div
+      ref={nodeRef}
       className={className}
       style={coupleColor ? { borderLeft: `4px solid ${coupleColor}`, paddingLeft: '6px' } : undefined}
       draggable
@@ -103,6 +106,39 @@ export default function TableCard({ table, guests, selectedGuestId, coupleColorM
   const { t } = useLang()
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dragOverKey, setDragOverKey] = useState<string | null>(null)
+
+  // FLIP animation refs
+  const seatRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const prevPositions = useRef<Map<string, { top: number; left: number }>>(new Map())
+
+  function capturePositions() {
+    const positions = new Map<string, { top: number; left: number }>()
+    seatRefs.current.forEach((el, id) => {
+      const rect = el.getBoundingClientRect()
+      positions.set(id, { top: rect.top, left: rect.left })
+    })
+    prevPositions.current = positions
+  }
+
+  useLayoutEffect(() => {
+    if (prevPositions.current.size === 0) return
+    seatRefs.current.forEach((el, id) => {
+      const prev = prevPositions.current.get(id)
+      if (!prev) return
+      const curr = el.getBoundingClientRect()
+      const dy = prev.top - curr.top
+      const dx = prev.left - curr.left
+      if (Math.abs(dy) < 1 && Math.abs(dx) < 1) return
+      el.animate(
+        [
+          { transform: `translate(${dx}px, ${dy}px)` },
+          { transform: 'translate(0, 0)' },
+        ],
+        { duration: 220, easing: 'ease-out', fill: 'none' }
+      )
+    })
+    prevPositions.current = new Map()
+  }, [table.seats])
 
   const guestMap = new Map(guests.map((g) => [g.id, g]))
   const leftCount = Math.ceil(table.capacity / 2)
@@ -136,6 +172,7 @@ export default function TableCard({ table, guests, selectedGuestId, coupleColorM
         const draggedId = e.dataTransfer.getData('text/plain')
         if (!draggedId) return
         if (seatId && draggedId !== seatId) {
+          capturePositions()
           onDragSwap(draggedId, seatId)
         } else if (!seatId) {
           onDragMove(draggedId, table.id, seatIndex)
@@ -160,6 +197,10 @@ export default function TableCard({ table, guests, selectedGuestId, coupleColorM
         isClickDropTarget={seatId === null && selectedGuestId !== null}
         isDraggingOver={dragOverKey === key}
         isDragging={draggingId === seatId}
+        nodeRef={seatId ? (el) => {
+          if (el) seatRefs.current.set(seatId, el)
+          else seatRefs.current.delete(seatId)
+        } : undefined}
         onGuestClick={onGuestClick}
         onEmptySeatClick={() => onEmptySeatClick(table.id, absoluteIndex)}
         {...handlers}
